@@ -1,15 +1,145 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+/* primary: "#0e1c49de",
+secondary: "#93c5fd" */
+
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --primary: #0e1c49de;
+  --secondary: #93c5fd;
 }
 
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.hover\:w-full:hover {
+  width: 100%;
+}
+.group:hover .group-hover\:w-full {
+  width: 100%;
+}
+.group:hover .group-hover\:inline-block {
+  display: inline-block;
+}
+.group:hover .group-hover\:flex-grow {
+  flex-grow: 1;
+}
+
+/* leaflet */
+
+.out-bottom, .out-top {
+  transition: transform .3s ease;
+}
+body.leaflet-dragging .out-bottom {
+  transform: translateY(80px);
+} 
+
+body.leaflet-dragging .out-top{
+  transform: translateY(-55px);
+}
+
+
+/* estilo para las pages execto la principal ->  "/" */
+.pageview {
+  /* w-screen h-[70vh] */
+  width: 100%;
+  height: calc(100vh - 140px);
+}
+
+.leaflet-control-container {
+  display: none
+}
+
+/* Estilos para la barra de scroll */
+.c-scrollbar::-webkit-scrollbar {
+  width: 6px; /* Ancho de la barra de scroll */
+}
+
+.c-scrollbar::-webkit-scrollbar-track {
+  background:var(--primary); /* Color del fondo de la barra de scroll */
+}
+
+.c-scrollbar::-webkit-scrollbar-thumb {
+  background: #888; /* Color del pulgar de la barra de scroll */
+  border-radius: 6px; /* Redondear el pulgar */
+}
+
+.c-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Color del pulgar al pasar el mouse */
+}
+
+/* body.leaflet-draggin > div.out-bottom > nav > div.config-panel{
+  opacity: 0;
+
+} */
+
+.switch {
+  --secondary-container: #3a4b39;
+
+  font-size: 13.6px; /* 17px * 0.8 */
+  position: relative;
+  display: inline-block;
+  width: 2.96em; /* 3.7em * 0.8 */
+  height: 1.44em; /* 1.8em * 0.8 */
+}
+
+.switch input {
+  display: none;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #e9faff;
+  transition: 0.2s;
+  border-radius: 24px; /* 30px * 0.8 */
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 1.12em; /* 1.4em * 0.8 */
+  width: 1.12em; /* 1.4em * 0.8 */
+  border-radius: 16px; /* 20px * 0.8 */
+  left: 0.16em; /* 0.2em * 0.8 */
+  bottom: 0.16em; /* 0.2em * 0.8 */
+  background-color: #656f72;  
+  transition: 0.4s;
+}
+
+input:checked + .slider::before {
+  background-color: var(--primary);
+}
+
+input:checked + .slider {
+  background-color: var(--secondary);
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 0.8px var(--secondary); /* 1px * 0.8 */
+}
+
+input:checked + .slider:before {
+  transform: translateX(1.52em); /* 1.9em * 0.8 */
+}
