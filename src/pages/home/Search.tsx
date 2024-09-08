@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BiSearchAlt as SearchIcon } from "react-icons/bi";
+import { BiSearchAlt as SearchIcon, BiX as ClearIcon } from "react-icons/bi";
 import { getGeoData, Response } from "../../shared/services/GetGeoData";
 import { useMapStore } from '../../shared/store/mapStore';
 import { getQueryData } from '../../shared/services/GetQueryData';
@@ -36,10 +36,21 @@ export const Search: React.FC = () => {
     setInputValue(event.target.value);
   };
 
+  const handleClearInput = () => {
+    setInputValue('');
+  }
+
   const handleClick = async (query: string, whatIs: string) => {
     setInputValue('');
     const data = await getQueryData(query, whatIs);
     updateGeojson(data);
+  };
+
+  const handleBlur = () => {
+    setTimeout(() => {
+      setInputValue('');
+    }, 200
+    );
   };
 
   const filteredDepartamentos = geoData.departamentos.filter(depto =>
@@ -57,13 +68,23 @@ export const Search: React.FC = () => {
       {search && (
         <div className="flex w-[90%] mx-auto">
           <SearchIcon className="text-white text-[40px] absolute inset-y-0 left-[5%] flex items-center pl-3 pointer-events-none z-30" />
-          <input
-            onChange={handleInputChange}
-            value={inputValue}
-            type="text"
-            placeholder="Busca distritos, municipios, departamentos"
-            className="relative w-full p-3 pl-[50px] text-sm bg-primary placeholder-gray-400 text-white rounded border-none outline-none"
-          />
+          <div className="w-full flex items-center justify-center">
+            <input
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+              value={inputValue}
+              type="text"
+              placeholder="Busca distritos, municipios, departamentos"
+              className="relative w-full p-3 pl-[50px] text-sm bg-primary placeholder-gray-400 text-white rounded border-none outline-none"
+            />
+
+            {inputValue && (
+              <ClearIcon
+                className="text-white text-[35px] absolute right-[5%] flex items-center pr-3 cursor-pointer z-30"
+                onClick={handleClearInput} // Limpiar el input al hacer clic
+              />
+            )}
+          </div>
 
           {inputValue && (
             <section className="mt-[50px] h-min absolute w-full z-30 left-0 rounded-bl rounded-br out-top">
