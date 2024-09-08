@@ -11,6 +11,12 @@ importers:
       '@turf/turf':
         specifier: ^7.1.0
         version: 7.1.0
+      dom-to-image:
+        specifier: ^2.6.0
+        version: 2.6.0
+      downloadjs:
+        specifier: ^1.4.7
+        version: 1.4.7
       leaflet:
         specifier: ^1.9.4
         version: 1.9.4
@@ -36,6 +42,9 @@ importers:
       '@eslint/js':
         specifier: ^9.9.0
         version: 9.10.0
+      '@types/downloadjs':
+        specifier: ^1.4.6
+        version: 1.4.6
       '@types/geojson':
         specifier: ^7946.0.14
         version: 7946.0.14
@@ -815,6 +824,9 @@ packages:
   '@types/d3-voronoi@1.1.12':
     resolution: {integrity: sha512-DauBl25PKZZ0WVJr42a6CNvI6efsdzofl9sajqZr2Gf5Gu733WkDdUGiPkUHXiUvYGzNNlFQde2wdZdfQPG+yw==}
 
+  '@types/downloadjs@1.4.6':
+    resolution: {integrity: sha512-mp3w70vsaiLRT9ix92fmI9Ob2yJAPZm6tShJtofo2uHbN11G2i6a0ApIEjBl/kv3e9V7Pv7jMjk1bUwYWvMHvA==}
+
   '@types/estree@1.0.5':
     resolution: {integrity: sha512-/kYRxGDLWzHOB7q+wtSUQlFrtcdUccpfy+X+9iMBpHK8QLLhx2wIPYuS5DYtR9Wa/YlZAbIovy7qVdB1Aq6Lyw==}
 
@@ -1050,6 +1062,12 @@ packages:
 
   dlv@1.1.3:
     resolution: {integrity: sha512-+HlytyjlPKnIG8XuRG8WvmBP8xs8P71y+SKKS6ZXWoEgLuePxtDoUEiH7WkdePWrQ5JBpE6aoVqfZfJUQkjXwA==}
+
+  dom-to-image@2.6.0:
+    resolution: {integrity: sha512-Dt0QdaHmLpjURjU7Tnu3AgYSF2LuOmksSGsUcE6ItvJoCWTBEmiMXcqBdNSAm9+QbbwD7JMoVsuuKX6ZVQv1qA==}
+
+  downloadjs@1.4.7:
+    resolution: {integrity: sha512-LN1gO7+u9xjU5oEScGFKvXhYf7Y/empUIIEAGBs1LzUq/rg5duiDrkuH5A2lQGd5jfMOb9X9usDa2oVXwJ0U/Q==}
 
   earcut@2.2.4:
     resolution: {integrity: sha512-/pjZsA1b4RPHbeWZQn66SWS8nZZWLQQ23oE3Eam7aroEFGEvwKAsJfZ9ytiEMycfzXWpca4FA9QIOehf7PocBQ==}
@@ -3145,6 +3163,8 @@ snapshots:
 
   '@types/d3-voronoi@1.1.12': {}
 
+  '@types/downloadjs@1.4.6': {}
+
   '@types/estree@1.0.5': {}
 
   '@types/geojson@7946.0.14': {}
@@ -3399,6 +3419,10 @@ snapshots:
   didyoumean@1.2.2: {}
 
   dlv@1.1.3: {}
+
+  dom-to-image@2.6.0: {}
+
+  downloadjs@1.4.7: {}
 
   earcut@2.2.4: {}
 
