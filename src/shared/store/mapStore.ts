@@ -2,12 +2,14 @@
 import { create } from 'zustand';
 import * as turf from '@turf/turf';
 import { LatLng } from 'leaflet';
+import { FeatureCollection, MultiPolygon } from 'geojson';  // Importamos MultiPolygon de geojson
+import { FeatureProperties } from '../types/feature-propoerties';  // Usamos tus tipos personalizados
 
 interface MapState {
   config: MapConfigOptions;
   updateConfig: (newConfig: MapConfigOptions) => void;
-  geojson: GeoJSON.FeatureCollection | null;
-  updateGeojson: (newGeojson: GeoJSON.FeatureCollection) => void;
+  geojson: FeatureCollection<MultiPolygon, FeatureProperties> | null;  // Corregimos el tipo de geojson
+  updateGeojson: (newGeojson: FeatureCollection<MultiPolygon, FeatureProperties> | null) => void;
   polygon: LatLng[];
   updatePolygon: (newPolygon: LatLng[]) => void;
 }
@@ -23,15 +25,18 @@ export const useMapStore = create<MapState>((set) => ({
     zoom: 9,
   },
   updateConfig: (newConfig) => set(() => ({ config: newConfig })),
+
   geojson: null,
   updateGeojson: (newGeojson) => {
-    set(() => ({ geojson: newGeojson }));
+    if (newGeojson && Array.isArray(newGeojson.features) && newGeojson.features.length > 0) {
+      set(() => ({ geojson: newGeojson }));
 
-    if (newGeojson && newGeojson.features.length > 0) {
-      const bbox = turf.bbox(newGeojson);
-      const bboxPolygon = turf.bboxPolygon(bbox);
-      const center = turf.center(bboxPolygon);
-      const centerCoords = center.geometry.coordinates;
+      console.log('Calculating zoom level...');
+
+      const bbox = turf.bbox(newGeojson);  // Calcula el bounding box del GeoJSON
+      const bboxPolygon = turf.bboxPolygon(bbox);  // Genera el polígono basado en el bounding box
+      const center = turf.center(bboxPolygon);  // Calcula el centro del polígono
+      const centerCoords = center.geometry.coordinates as [number, number];  // Aseguramos que las coordenadas son [number, number]
 
       const diagonal = turf.distance(
         turf.point([bbox[0], bbox[1]]),
@@ -39,9 +44,12 @@ export const useMapStore = create<MapState>((set) => ({
         { units: 'kilometers' }
       );
 
-      const worldWidthKm = 40075; // Circunferencia aproximada de la tierra en km
+      const worldWidthKm = 40075;  // Circunferencia aproximada de la tierra en km
       const mapWidthInKmAtZoom0 = worldWidthKm;
-      const screenWidth = 1024; // Ajusta esto según el tamaño de la pantalla
+
+      // Pantalla dinámica
+      const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 1024;
+
       const zoom = Math.log2((mapWidthInKmAtZoom0 / diagonal) * (screenWidth / 300));
       console.log(`Calculated zoom: ${zoom}`);
 
@@ -51,8 +59,11 @@ export const useMapStore = create<MapState>((set) => ({
           zoom: zoom,
         },
       }));
+    } else {
+      console.error('El objeto GeoJSON no es válido o no tiene características.');
     }
   },
+
   polygon: [],
   updatePolygon: (newPolygon) => set(() => ({ polygon: newPolygon })),
 }));

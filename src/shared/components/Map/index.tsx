@@ -62,6 +62,7 @@ export const Map: React.FC = () => {
     <>
       {!mapReady && <MapLoading />}
       <MapContainer
+        key={JSON.stringify(center)}
         center={center}
         zoom={zoom}
         className="w-screen h-screen fixed top-0 left-0"

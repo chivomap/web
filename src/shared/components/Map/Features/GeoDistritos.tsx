@@ -1,20 +1,19 @@
-import L from 'leaflet'; // Importar Leaflet
+import L from 'leaflet';
 import { GeoJSON } from 'react-leaflet';
-import { Feature, Geometry, GeoJsonProperties } from 'geojson';
+import { Feature, Geometry, GeoJsonProperties, FeatureCollection } from 'geojson';
 import { useMapStore } from '../../../../shared/store/mapStore';
-
 
 export function GeoDistritos() {
   const { geojson } = useMapStore();
 
-  // Define the correct types for onEachPolygon
+  console.log('geojson', geojson);
+
   const onEachPolygon = (feature: Feature<Geometry, GeoJsonProperties>, layer: L.Layer) => {
     if (feature.properties) {
       const nombre = feature.properties.NAM;
       const M = feature.properties.M;
-      console.log("direccionCardinal", M);
+      console.log('direccionCardinal', M);
 
-      // mouse events
       layer.on({
         mouseover: () => {
           if (layer instanceof L.Path) {
@@ -34,12 +33,7 @@ export function GeoDistritos() {
             });
           }
         },
-      });
-
-      // click event
-      layer.on({
         click: () => {
-          console.log('CLICK', nombre);
           if (layer instanceof L.Path) {
             layer.setStyle({
               color: '#000',
@@ -49,21 +43,15 @@ export function GeoDistritos() {
       });
 
       layer.bindPopup(`
-        <b style="font-size: 1.3rem;">
-          ${nombre}
-        </b> 
-        <br> 
-        <span style="font-size: .9rem;">
-         ${M}
-        </span>`
-      );
+        <b style="font-size: 1.3rem;">${nombre}</b>
+        <br>
+        <span style="font-size: .9rem;">${M}</span>
+      `);
     }
   };
 
-  // Define the correct types for getPolygonStyle
   const getPolygonStyle = (feature: Feature<Geometry, GeoJsonProperties> | undefined) => {
     if (!feature || !feature.properties) {
-      // Devuelve un estilo por defecto si el feature es undefined
       return {
         fillColor: '#000',
         fillOpacity: 0.35,
@@ -73,9 +61,9 @@ export function GeoDistritos() {
       };
     }
 
-    const M = feature.properties.M as string;
-   
-    let colorDistrito = "#000";
+    const M = feature.properties.M || '';
+
+    let colorDistrito = '#000';
 
     if (M.includes('Norte')) {
       colorDistrito = '#F9D82D';
@@ -92,7 +80,7 @@ export function GeoDistritos() {
     return {
       fillColor: colorDistrito,
       fillOpacity: 0.35,
-      color: "#444",
+      color: '#444',
       weight: 1,
       dashArray: [1, 1],
     };
@@ -102,7 +90,7 @@ export function GeoDistritos() {
     <>
       {geojson && (
         <GeoJSON
-          data={geojson as GeoJSON.FeatureCollection<Geometry, GeoJsonProperties>}
+          data={geojson as FeatureCollection<Geometry, GeoJsonProperties>}
           style={getPolygonStyle}
           onEachFeature={onEachPolygon}
           key={JSON.stringify(geojson)}
