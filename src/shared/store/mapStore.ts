@@ -31,34 +31,43 @@ export const useMapStore = create<MapState>((set) => ({
     if (newGeojson && Array.isArray(newGeojson.features) && newGeojson.features.length > 0) {
       set(() => ({ geojson: newGeojson }));
 
-      console.log('Calculating zoom level...');
-
-      const bbox = turf.bbox(newGeojson);  // Calcula el bounding box del GeoJSON
-      const bboxPolygon = turf.bboxPolygon(bbox);  // Genera el polígono basado en el bounding box
-      const center = turf.center(bboxPolygon);  // Calcula el centro del polígono
-      const centerCoords = center.geometry.coordinates as [number, number];  // Aseguramos que las coordenadas son [number, number]
-
+      const bbox = turf.bbox(newGeojson); // Calcula el bounding box del GeoJSON
+      const bboxPolygon = turf.bboxPolygon(bbox); // Genera el polígono basado en el bounding box
+      const center = turf.center(bboxPolygon); // Calcula el centro del polígono
+      const centerCoords = center.geometry.coordinates as [number, number]; // Aseguramos que las coordenadas son [number, number]
+      
+      // Calcular la diagonal en kilómetros entre las esquinas del bbox
       const diagonal = turf.distance(
         turf.point([bbox[0], bbox[1]]),
         turf.point([bbox[2], bbox[3]]),
         { units: 'kilometers' }
       );
-
-      const worldWidthKm = 40075;  // Circunferencia aproximada de la tierra en km
-      const mapWidthInKmAtZoom0 = worldWidthKm;
-
-      // Pantalla dinámica
+      
+      // Circunferencia aproximada de la tierra en km
+      const worldWidthKm = 40075; 
+      
+      // Tamaño de la pantalla dinámica (considerando si está disponible `window`)
       const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 1024;
-
-      const zoom = Math.log2((mapWidthInKmAtZoom0 / diagonal) * (screenWidth / 300));
+      const screenHeight = typeof window !== 'undefined' ? window.innerHeight : 768;
+      
+      // Calcula el ancho visible del mapa a zoom 0
+      const mapWidthInKmAtZoom0 = worldWidthKm / Math.pow(2, 0);
+      
+      // Factor de ajuste basado en la pantalla (relación ancho/alto)
+      const aspectRatio = screenWidth / screenHeight;
+      
+      // Ajusta el zoom calculando el nivel en función de la diagonal del bbox
+      const zoom = Math.log2((mapWidthInKmAtZoom0 * aspectRatio) / diagonal);
       console.log(`Calculated zoom: ${zoom}`);
-
+      
+      // Setear la nueva configuración del mapa con el centro y el zoom calculados
       set(() => ({
         config: {
           center: { lat: centerCoords[1], lng: centerCoords[0] },
-          zoom: zoom,
+          zoom: Math.round(zoom), // Ajustar al valor de zoom más cercano
         },
       }));
+      
     } else {
       console.error('El objeto GeoJSON no es válido o no tiene características.');
     }
