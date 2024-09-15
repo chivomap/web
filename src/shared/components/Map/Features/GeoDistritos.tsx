@@ -66,15 +66,15 @@ export function GeoDistritos() {
     let colorDistrito = '#000';
 
     if (M.includes('Norte')) {
-      colorDistrito = '#F9D82D';
+      colorDistrito = '#FF97C9';
     } else if (M.includes('Sur')) {
-      colorDistrito = '#B925FF';
+      colorDistrito = '#97FFC1';
     } else if (M.includes('Este')) {
-      colorDistrito = '#31E963';
+      colorDistrito = '#9F97FF';
     } else if (M.includes('Oeste')) {
-      colorDistrito = '#FF4E4E';
+      colorDistrito = '#FF9D97';
     } else if (M.includes('Centro')) {
-      colorDistrito = '#000';
+      colorDistrito = '#97D8FF';
     }
 
     return {
