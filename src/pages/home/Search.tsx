@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { BiSearchAlt as SearchIcon, BiX as ClearIcon } from "react-icons/bi";
-import { getGeoData, Response } from "../../shared/services/GetGeoData";
+import { getGeoData, GeoDataSearch } from "../../shared/services/GetGeoData";
 import { useMapStore } from '../../shared/store/mapStore';
 import { getQueryData } from '../../shared/services/GetQueryData';
 import { TextCarousel } from './TextCarrusel';
 import { useLayoutStore } from '../../shared/store/layoutStore';
 
 export const Search: React.FC = () => {
-  const [geoData, setGeoData] = useState<Response>({
+  const [geoData, setGeoData] = useState<GeoDataSearch>({
     departamentos: [],
     municipios: [],
     distritos: []
@@ -26,7 +26,7 @@ export const Search: React.FC = () => {
 
     const fetchData = async () => {
       const data = await getGeoData();
-      setGeoData(data);
+      setGeoData(data.data);
     };
 
     fetchData();
