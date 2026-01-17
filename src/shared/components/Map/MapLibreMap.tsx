@@ -1,0 +1,110 @@
+import React, { useState, useCallback } from 'react';
+import Map, { ViewStateChangeEvent } from 'react-map-gl/maplibre';
+import { LngLat } from 'maplibre-gl';
+import { useMapStore } from '../../../shared/store/mapStore';
+import { env } from '../../config/env';
+import { defaultMapStyle, MapStyle } from '../../data/mapStyles';
+
+import { MapControls, MapMarker, PolygonDisplay, GeoDistritos, MapStyleSelector, MapScale } from './Features';
+import 'maplibre-gl/dist/maplibre-gl.css';
+
+import { useLocation } from 'wouter';
+
+export const MapLibreMap: React.FC = () => {
+  const [mapReady, setMapReady] = useState<boolean>(false);
+  const [clickPosition, setClickPosition] = useState<LngLat | null>(null);
+  const [polygonCoords, setPolygonCoords] = useState<LngLat[]>([]);
+  const [mapStyle, setMapStyle] = useState<string>(defaultMapStyle.url);
+  const { config, updateConfig, updatePolygon } = useMapStore();
+  const { center, zoom } = config;
+
+  const [, navigate] = useLocation();
+
+  const handleMapLoad = useCallback(() => {
+    setMapReady(true);
+  }, []);
+
+  const handleViewStateChange = useCallback((evt: ViewStateChangeEvent) => {
+    updateConfig({
+      center: { lat: evt.viewState.latitude, lng: evt.viewState.longitude },
+      zoom: evt.viewState.zoom
+    });
+  }, [updateConfig]);
+
+  const handleMapClick = useCallback((event: any) => {
+    const { lngLat } = event;
+    setClickPosition(lngLat);
+  }, []);
+
+  const handleMapRightClick = useCallback((event: any) => {
+    event.preventDefault();
+    const { lngLat } = event;
+    setPolygonCoords((prevCoords) => [...prevCoords, lngLat]);
+  }, []);
+
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    if (event.key === 'Backspace' || event.key === 'Delete') {
+      setClickPosition(null);
+      setPolygonCoords([]);
+    } else if (event.ctrlKey && event.key === 'z') {
+      setPolygonCoords((prevCoords) => prevCoords.slice(0, -1));
+    }
+  }, []);
+
+  React.useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleKeyDown]);
+
+  const handleExport = () => {
+    updatePolygon(polygonCoords);
+    navigate('/export');
+  };
+
+  const handleStyleChange = useCallback((style: MapStyle) => {
+    setMapStyle(style.url);
+  }, []);
+
+  return (
+    <div className="w-screen h-screen fixed top-0 left-0">
+      <Map
+        longitude={center.lng}
+        latitude={center.lat}
+        zoom={zoom}
+        minZoom={env.MAP_MIN_ZOOM}
+        maxZoom={18}
+        style={{ width: '100%', height: '100%' }}
+        mapStyle={mapStyle}
+        onLoad={handleMapLoad}
+        onMove={handleViewStateChange}
+        onClick={handleMapClick}
+        onContextMenu={handleMapRightClick}
+        maxBounds={[
+          [-91.00994252677712, 11.214449814812207], // Southwest
+          [-85.6233130419287, 17.838768214469866]   // Northeast
+        ]}
+        interactiveLayerIds={[]}
+        attributionControl={false}
+      >
+        <MapStyleSelector 
+          currentStyle={mapStyle} 
+          onStyleChange={handleStyleChange} 
+        />
+        <MapControls />
+        <MapScale />
+        
+        {mapReady && (
+          <>
+            <GeoDistritos />
+            {clickPosition && <MapMarker position={clickPosition} />}
+            {polygonCoords.length > 0 && (
+              <PolygonDisplay coordinates={polygonCoords} onExport={handleExport} />
+            )}
+          </>
+        )}
+      </Map>
+    </div>
+  );
+};

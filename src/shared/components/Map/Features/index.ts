@@ -1,6 +1,7 @@
-export * from './ClickHandler';
-export * from './MapLoading';
-export * from './MapMarker';
-export * from './PolygonDisplay';
-export * from './GeoDistritos';
-export * from './TileLayer';
+export { MapControls } from './MapControls';
+export { MapMarker } from './MapMarker';
+export { PolygonDisplay } from './PolygonDisplay';
+export { GeoDistritos } from './GeoDistritos';
+export { MapStyleSelector } from './MapStyleSelector';
+export { MapScale } from './MapScale';
+export { ProjectInfo } from './ProjectInfo';

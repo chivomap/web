@@ -1,31 +1,82 @@
 import React from 'react';
-import { LatLng } from 'leaflet';
-import { Polygon, Popup } from 'react-leaflet';
-import { IoSave as SaveIcon } from 'react-icons/io5';
-import { BiExport as ExportIcon } from 'react-icons/bi';
+import { Source, Layer } from 'react-map-gl/maplibre';
+import { LngLat } from 'maplibre-gl';
+import { BiExport } from 'react-icons/bi';
+import type { LayerProps } from 'react-map-gl/maplibre';
 
 interface PolygonDisplayProps {
-  coordinates: LatLng[];
+  coordinates: LngLat[];
   onExport: () => void;
 }
 
 export const PolygonDisplay: React.FC<PolygonDisplayProps> = ({ coordinates, onExport }) => {
+  if (coordinates.length < 2) return null;
+
+  // Convert coordinates to GeoJSON format
+  const geojsonData = {
+    type: 'FeatureCollection' as const,
+    features: [
+      {
+        type: 'Feature' as const,
+        geometry: coordinates.length > 2 
+          ? {
+              type: 'Polygon' as const,
+              coordinates: [[...coordinates.map(coord => [coord.lng, coord.lat]), [coordinates[0].lng, coordinates[0].lat]]]
+            }
+          : {
+              type: 'LineString' as const,
+              coordinates: coordinates.map(coord => [coord.lng, coord.lat])
+            },
+        properties: {}
+      }
+    ]
+  };
+
+  const layerStyle: LayerProps = coordinates.length > 2 
+    ? {
+        id: 'polygon-layer',
+        type: 'fill',
+        paint: {
+          'fill-color': '#3b82f6',
+          'fill-opacity': 0.3
+        }
+      }
+    : {
+        id: 'polygon-layer',
+        type: 'line',
+        paint: {
+          'line-color': '#3b82f6',
+          'line-width': 3
+        }
+      };
+
+  const outlineStyle: LayerProps | null = coordinates.length > 2 ? {
+    id: 'polygon-outline',
+    type: 'line',
+    paint: {
+      'line-color': '#1d4ed8',
+      'line-width': 2
+    }
+  } : null;
+
   return (
-    <Polygon positions={coordinates}>
-      <Popup>
-        <p className='font-bold text-lg leading-[0px]'>Polígono de {coordinates.length} puntos.</p>
-        <div className='flex items-center justify-around'>
-          <button className='bg-primary flex items-center gap-2 text-white text-base px-2 py-1 rounded-md mt-2 hover:bg-primary/50 transition-colors duration-300 ease-in-out'>
-            Guardar <SaveIcon />
-          </button>
-          <button 
+    <>
+      <Source id="polygon-source" type="geojson" data={geojsonData}>
+        <Layer {...layerStyle} />
+        {outlineStyle && <Layer {...outlineStyle} />}
+      </Source>
+      
+      {coordinates.length > 2 && (
+        <div className="absolute bottom-20 right-[5%] sm:bottom-4 sm:right-4 z-10">
+          <button
             onClick={onExport}
-            className='bg-primary flex items-center gap-2 text-white text-base px-2 py-1 rounded-md mt-2 hover:bg-primary/50 transition-colors duration-300 ease-in-out'
+            className="bg-primary hover:bg-primary/80 text-secondary px-3 py-2 sm:px-4 sm:py-2 rounded-lg shadow-lg flex items-center gap-2 transition-colors touch-manipulation"
           >
-            Exportar <ExportIcon />
+            <BiExport className="text-base sm:text-lg" />
+            <span className="text-sm sm:text-base">Exportar</span>
           </button>
         </div>
-      </Popup>
-    </Polygon>
+      )}
+    </>
   );
 };

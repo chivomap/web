@@ -1,7 +1,7 @@
 'use client';
 import { create } from 'zustand';
 import * as turf from '@turf/turf';
-import { LatLng } from 'leaflet';
+import { LngLat } from 'maplibre-gl';
 import { FeatureCollection, MultiPolygon } from 'geojson';
 import { FeatureProperties } from '../types/feature-propoerties';
 import { env, isDevelopment } from '../config/env';
@@ -11,8 +11,8 @@ interface MapState {
   updateConfig: (newConfig: MapConfigOptions) => void;
   geojson: FeatureCollection<MultiPolygon, FeatureProperties> | null;
   updateGeojson: (newGeojson: FeatureCollection<MultiPolygon, FeatureProperties> | null) => void;
-  polygon: LatLng[];
-  updatePolygon: (newPolygon: LatLng[]) => void;
+  polygon: LngLat[];
+  updatePolygon: (newPolygon: LngLat[]) => void;
 }
 
 interface MapConfigOptions {

@@ -16,9 +16,6 @@ export const Nav = () => {
 
   return (
     <>
-      <a className='absolute text-[12px] font-bold top-[-20px]' href="https://earevalo.tech">
-        <h2 className='text-gray-900'>Develop by Eliseo Arévalo</h2>
-      </a>
       <nav className="flex px-5 bg-primary shadow-lg max-w-md rounded-xl">
         <LinksContainer />
       </nav>
