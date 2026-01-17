@@ -5,6 +5,8 @@ import { useMapStore } from '../../shared/store/mapStore';
 import { getQueryData } from '../../shared/services/GetQueryData';
 import { TextCarousel } from './TextCarrusel';
 import { useLayoutStore } from '../../shared/store/layoutStore';
+import { useErrorStore } from '../../shared/store/errorStore';
+import { errorHandler } from '../../shared/errors/ErrorHandler';
 
 export const Search: React.FC = () => {
   const [geoData, setGeoData] = useState<GeoDataSearch>({
@@ -16,21 +18,34 @@ export const Search: React.FC = () => {
   const { layoutStates } = useLayoutStore();
   const { search, department } = layoutStates;
   const { updateGeojson } = useMapStore();
+  const { showError, setLoading } = useErrorStore();
 
   useEffect(() => {
     const setCookie = () => {
-      document.cookie = 'hasVisited=true; path=/; max-age=31536000'; // Cookie válida por un año
+      try {
+        document.cookie = 'hasVisited=true; path=/; max-age=31536000; SameSite=Strict';
+      } catch (error) {
+        console.warn('Could not set cookie:', error);
+      }
     };
 
     setCookie();
 
     const fetchData = async () => {
-      const data = await getGeoData();
-      setGeoData(data.data);
+      try {
+        setLoading(true);
+        const data = await getGeoData();
+        setGeoData(data.data);
+      } catch (error) {
+        const handledError = errorHandler.handle(error);
+        showError(handledError);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchData();
-  }, []);
+  }, [setLoading, showError]);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(event.target.value);
@@ -41,16 +56,28 @@ export const Search: React.FC = () => {
   }
 
   const handleClick = async (query: string, whatIs: string) => {
-    setInputValue('');
-    const data = await getQueryData(query, whatIs);
-    updateGeojson(data);
+    try {
+      setInputValue('');
+      setLoading(true);
+      
+      const data = await getQueryData(query, whatIs);
+      if (data) {
+        updateGeojson(data);
+      } else {
+        showError(errorHandler.handle(new Error('No se encontraron datos para la búsqueda')));
+      }
+    } catch (error) {
+      const handledError = errorHandler.handle(error);
+      showError(handledError);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBlur = () => {
     setTimeout(() => {
       setInputValue('');
-    }, 200
-    );
+    }, 200);
   };
 
   const filteredDepartamentos = geoData.departamentos.filter(depto =>
@@ -60,7 +87,7 @@ export const Search: React.FC = () => {
     muni?.toLowerCase().includes(inputValue.toLowerCase())
   );
   const filteredDistritos = geoData.distritos.filter(distrito =>
-    distrito.toLowerCase().includes(inputValue.toLowerCase())
+    distrito?.toLowerCase().includes(inputValue.toLowerCase())
   );
 
   return (

@@ -15,7 +15,7 @@ export const TextCarousel: React.FC = () => {
       const data = await getGeoData();
       console.log(data);
       // Mantener el mismo orden solo mover "SAN SALVADOR" al principio
-      const sorted = [...data.departamentos];
+      const sorted = [...data.data.departamentos];
       sorted.sort((a, b) => {
         if (a === 'SAN SALVADOR') return -1;
         if (b === 'SAN SALVADOR') return 1;
@@ -23,7 +23,7 @@ export const TextCarousel: React.FC = () => {
       });
 
       setDepartamentos(sorted);
-      if (data.departamentos.length > 0) {
+      if (data.data.departamentos.length > 0) {
         handleFetchData(sorted[0]);
       }
     };
