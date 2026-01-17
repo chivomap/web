@@ -1,9 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import Map, { ViewStateChangeEvent } from 'react-map-gl/maplibre';
 import { LngLat } from 'maplibre-gl';
 import { useMapStore } from '../../../shared/store/mapStore';
 import { env } from '../../config/env';
-import { defaultMapStyle, MapStyle } from '../../data/mapStyles';
+import { MapStyle } from '../../data/mapStyles';
+import { useThemeStore } from '../../store/themeStore';
 
 import { MapControls, MapMarker, PolygonDisplay, GeoDistritos, MapStyleSelector, MapScale } from './Features';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -14,11 +15,18 @@ export const MapLibreMap: React.FC = () => {
   const [mapReady, setMapReady] = useState<boolean>(false);
   const [clickPosition, setClickPosition] = useState<LngLat | null>(null);
   const [polygonCoords, setPolygonCoords] = useState<LngLat[]>([]);
-  const [mapStyle, setMapStyle] = useState<string>(defaultMapStyle.url);
   const { config, updateConfig, updatePolygon } = useMapStore();
+  const { currentMapStyle, setMapStyle } = useThemeStore();
   const { center, zoom } = config;
 
   const [, navigate] = useLocation();
+
+  // Initialize map style from store
+  const [mapStyle, setMapStyleState] = useState<string>(currentMapStyle.url);
+
+  useEffect(() => {
+    setMapStyleState(currentMapStyle.url);
+  }, [currentMapStyle]);
 
   const handleMapLoad = useCallback(() => {
     setMapReady(true);
@@ -64,8 +72,9 @@ export const MapLibreMap: React.FC = () => {
   };
 
   const handleStyleChange = useCallback((style: MapStyle) => {
-    setMapStyle(style.url);
-  }, []);
+    setMapStyleState(style.url);
+    setMapStyle(style);
+  }, [setMapStyle]);
 
   return (
     <div className="w-screen h-screen fixed top-0 left-0">
@@ -89,7 +98,6 @@ export const MapLibreMap: React.FC = () => {
         attributionControl={false}
       >
         <MapStyleSelector 
-          currentStyle={mapStyle} 
           onStyleChange={handleStyleChange} 
         />
         <MapControls />

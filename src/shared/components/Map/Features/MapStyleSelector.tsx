@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
 import { BiSun, BiMoon } from 'react-icons/bi';
-import { mapStyles, defaultMapStyle, MapStyle } from '../../../data/mapStyles';
+import { mapStyles, MapStyle } from '../../../data/mapStyles';
+import { useThemeStore } from '../../../store/themeStore';
 
 interface MapStyleSelectorProps {
-  currentStyle: string;
   onStyleChange: (style: MapStyle) => void;
 }
 
 export const MapStyleSelector: React.FC<MapStyleSelectorProps> = ({ 
-  currentStyle, 
   onStyleChange 
 }) => {
-  const currentStyleData = mapStyles.find(style => style.url === currentStyle) || defaultMapStyle;
-  const isDark = currentStyleData.id === 'carto-dark-matter';
+  const { currentMapStyle, setMapStyle } = useThemeStore();
+  const isDark = currentMapStyle.id === 'carto-dark-matter';
   
   const toggleStyle = () => {
     const newStyle = isDark ? mapStyles[0] : mapStyles[1]; // Toggle between light and dark
+    setMapStyle(newStyle);
     onStyleChange(newStyle);
   };
 
