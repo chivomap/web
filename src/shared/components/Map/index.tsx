@@ -2,14 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { MapContainer } from 'react-leaflet';
 import { LatLng } from 'leaflet';
 import { useMapStore } from '../../../shared/store/mapStore';
-// import { useLayoutStore } from '../../../shared/store/layoutStore';
+import { env } from '../../config/env';
 
 import { ClickHandler, MapLoading, MapMarker, PolygonDisplay, Contribution, GeoDistritos } from './Features';
 import 'leaflet/dist/leaflet.css';
 
 import { useLocation } from 'wouter';
-
-// Removidos: dynamic imports de Next.js
 
 export const Map: React.FC = () => {
   const [mapReady, setMapReady] = useState<boolean>(false);
@@ -71,7 +69,7 @@ export const Map: React.FC = () => {
           [11.214449814812207, -85.6233130419287],
         ]}
         maxBoundsViscosity={0.0}
-        minZoom={8}
+        minZoom={env.MAP_MIN_ZOOM}
         whenReady={handleMapLoad}
         bounceAtZoomLimits={false}
       >
