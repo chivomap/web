@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { mapStyles, defaultMapStyle, MapStyle } from '../data/mapStyles';
+import { defaultMapStyle, MapStyle } from '../data/mapStyles';
 
 interface ThemeState {
   currentMapStyle: MapStyle;

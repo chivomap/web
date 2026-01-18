@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { BiSun, BiMoon } from 'react-icons/bi';
 import { mapStyles, MapStyle } from '../../../data/mapStyles';
 import { useThemeStore } from '../../../store/themeStore';

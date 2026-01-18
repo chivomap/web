@@ -17,7 +17,7 @@ export const Search: React.FC = () => {
   const [inputValue, setInputValue] = useState<string>('');
   const { layoutStates } = useLayoutStore();
   const { search, department } = layoutStates;
-  const { updateGeojson } = useMapStore();
+  const { updateGeojson, setSelectedInfo, setCurrentLevel, setParentInfo } = useMapStore();
   const { showError, setLoading } = useErrorStore();
 
   useEffect(() => {
@@ -63,6 +63,22 @@ export const Search: React.FC = () => {
       const data = await getQueryData(query, whatIs);
       if (data) {
         updateGeojson(data);
+        // Set selected info for the panel
+        setSelectedInfo({
+          type: whatIs === 'D' ? 'Departamento' : whatIs === 'M' ? 'Municipio' : 'Distrito',
+          name: query
+        });
+        
+        // Set navigation level
+        if (whatIs === 'D') {
+          setCurrentLevel('departamento'); // Mostrar municipios
+          setParentInfo(null);
+        } else if (whatIs === 'M') {
+          setCurrentLevel('distrito'); // Mostrar distritos
+          setParentInfo({ municipio: query });
+        } else {
+          setCurrentLevel('distrito'); // Mostrar distrito específico
+        }
       } else {
         showError(errorHandler.handle(new Error('No se encontraron datos para la búsqueda')));
       }

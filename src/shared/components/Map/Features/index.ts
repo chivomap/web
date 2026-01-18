@@ -4,4 +4,6 @@ export { PolygonDisplay } from './PolygonDisplay';
 export { GeoDistritos } from './GeoDistritos';
 export { MapStyleSelector } from './MapStyleSelector';
 export { MapScale } from './MapScale';
+export { MapLegend } from './MapLegend';
+export { NavigationBreadcrumb } from './NavigationBreadcrumb';
 export { ProjectInfo } from './ProjectInfo';

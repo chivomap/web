@@ -1,0 +1,38 @@
+/* Popup styles for light theme */
+.light-popup .maplibregl-popup-content {
+  background: rgba(255, 255, 255, 0.95);
+  color: #374151;
+  backdrop-filter: blur(8px);
+}
+
+.light-popup .maplibregl-popup-close-button {
+  color: #6b7280;
+}
+
+.light-popup .maplibregl-popup-close-button:hover {
+  color: #374151;
+}
+
+/* Popup styles for dark theme */
+.dark-popup .maplibregl-popup-content {
+  background: rgba(31, 41, 55, 0.95);
+  color: #e5e7eb;
+  backdrop-filter: blur(8px);
+}
+
+.dark-popup .maplibregl-popup-close-button {
+  color: #9ca3af;
+}
+
+.dark-popup .maplibregl-popup-close-button:hover {
+  color: #e5e7eb;
+}
+
+/* Popup tip styling */
+.light-popup .maplibregl-popup-tip {
+  border-top-color: rgba(255, 255, 255, 0.95);
+}
+
+.dark-popup .maplibregl-popup-tip {
+  border-top-color: rgba(31, 41, 55, 0.95);
+}

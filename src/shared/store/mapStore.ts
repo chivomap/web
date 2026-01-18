@@ -13,6 +13,16 @@ interface MapState {
   updateGeojson: (newGeojson: FeatureCollection<MultiPolygon, FeatureProperties> | null) => void;
   polygon: LngLat[];
   updatePolygon: (newPolygon: LngLat[]) => void;
+  selectedInfo: { type: string; name: string; data?: any } | null;
+  setSelectedInfo: (info: { type: string; name: string; data?: any } | null) => void;
+  currentLevel: 'departamento' | 'municipio' | 'distrito';
+  setCurrentLevel: (level: 'departamento' | 'municipio' | 'distrito') => void;
+  parentInfo: { departamento?: string; municipio?: string } | null;
+  setParentInfo: (info: { departamento?: string; municipio?: string } | null) => void;
+  previousGeojson: FeatureCollection<MultiPolygon, FeatureProperties> | null;
+  setPreviousGeojson: (geojson: FeatureCollection<MultiPolygon, FeatureProperties> | null) => void;
+  departamentoGeojson: FeatureCollection<MultiPolygon, FeatureProperties> | null;
+  setDepartamentoGeojson: (geojson: FeatureCollection<MultiPolygon, FeatureProperties> | null) => void;
 }
 
 interface MapConfigOptions {
@@ -33,7 +43,28 @@ export const useMapStore = create<MapState>((set) => ({
       if (newGeojson && Array.isArray(newGeojson.features) && newGeojson.features.length > 0) {
         set(() => ({ geojson: newGeojson }));
 
-        const bbox = turf.bbox(newGeojson);
+        // Validate GeoJSON features before processing
+        const validFeatures = newGeojson.features.filter(feature => 
+          feature && 
+          feature.geometry && 
+          feature.geometry.coordinates &&
+          Array.isArray(feature.geometry.coordinates)
+        );
+
+        if (validFeatures.length === 0) {
+          if (isDevelopment && env.ENABLE_CONSOLE_LOGS) {
+            console.warn('No valid features found in GeoJSON');
+          }
+          return;
+        }
+
+        // Create a clean GeoJSON with only valid features
+        const cleanGeojson = {
+          ...newGeojson,
+          features: validFeatures
+        };
+
+        const bbox = turf.bbox(cleanGeojson);
         const bboxPolygon = turf.bboxPolygon(bbox);
         const center = turf.center(bboxPolygon);
         const centerCoords = center.geometry.coordinates as [number, number];
@@ -88,4 +119,19 @@ export const useMapStore = create<MapState>((set) => ({
 
   polygon: [],
   updatePolygon: (newPolygon) => set(() => ({ polygon: newPolygon })),
+
+  selectedInfo: null,
+  setSelectedInfo: (info) => set(() => ({ selectedInfo: info })),
+
+  currentLevel: 'departamento',
+  setCurrentLevel: (level) => set(() => ({ currentLevel: level })),
+
+  parentInfo: null,
+  setParentInfo: (info) => set(() => ({ parentInfo: info })),
+
+  previousGeojson: null,
+  setPreviousGeojson: (geojson) => set(() => ({ previousGeojson: geojson })),
+
+  departamentoGeojson: null,
+  setDepartamentoGeojson: (geojson) => set(() => ({ departamentoGeojson: geojson })),
 }));

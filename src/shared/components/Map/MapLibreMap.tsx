@@ -8,6 +8,7 @@ import { useThemeStore } from '../../store/themeStore';
 
 import { MapControls, MapMarker, PolygonDisplay, GeoDistritos, MapStyleSelector, MapScale } from './Features';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import './popup-styles.css';
 
 import { useLocation } from 'wouter';
 
@@ -88,13 +89,65 @@ export const MapLibreMap: React.FC = () => {
         mapStyle={mapStyle}
         onLoad={handleMapLoad}
         onMove={handleViewStateChange}
-        onClick={handleMapClick}
+        onClick={(event) => {
+          // Handle distrito clicks first
+          if (event.features && event.features.length > 0) {
+            const feature = event.features[0];
+            if (feature.source === 'distritos-source') {
+              // Delegate to GeoDistritos component
+              const geoDistritosEvent = new CustomEvent('distrito-click', {
+                detail: { feature, lngLat: event.lngLat }
+              });
+              window.dispatchEvent(geoDistritosEvent);
+              return;
+            }
+          }
+          // Handle regular map clicks
+          handleMapClick(event);
+        }}
+        onMouseMove={(event) => {
+          if (event.features && event.features.length > 0) {
+            const feature = event.features[0];
+            if (feature.source === 'distritos-source') {
+              event.target.getCanvas().style.cursor = 'pointer';
+              if (feature.id !== undefined) {
+                // Limpiar hover anterior
+                event.target.queryRenderedFeatures().forEach((f: any) => {
+                  if (f.source === 'distritos-source' && f.id !== feature.id) {
+                    event.target.setFeatureState(
+                      { source: 'distritos-source', id: f.id },
+                      { hover: false }
+                    );
+                  }
+                });
+                // Activar hover actual
+                event.target.setFeatureState(
+                  { source: 'distritos-source', id: feature.id },
+                  { hover: true }
+                );
+              }
+            }
+          } else {
+            event.target.getCanvas().style.cursor = '';
+            // Limpiar todos los hovers
+            try {
+              event.target.queryRenderedFeatures().forEach((f: any) => {
+                if (f.source === 'distritos-source') {
+                  event.target.setFeatureState(
+                    { source: 'distritos-source', id: f.id },
+                    { hover: false }
+                  );
+                }
+              });
+            } catch (e) {}
+          }
+        }}
         onContextMenu={handleMapRightClick}
         maxBounds={[
           [-91.00994252677712, 11.214449814812207], // Southwest
           [-85.6233130419287, 17.838768214469866]   // Northeast
         ]}
-        interactiveLayerIds={[]}
+        interactiveLayerIds={['distritos-fill']}
         attributionControl={false}
       >
         <MapStyleSelector 
@@ -102,7 +155,6 @@ export const MapLibreMap: React.FC = () => {
         />
         <MapControls />
         <MapScale />
-        
         {mapReady && (
           <>
             <GeoDistritos />
