@@ -15,6 +15,7 @@ export const BottomSheet: React.FC = () => {
   const isOpen = !!(selectedInfo || annotations.length > 0);
 
   const getSheetHeight = () => {
+    if (window.innerWidth >= 640) return 'auto'; // Desktop: altura automática
     switch (sheetState) {
       case 'peek': return '140px';
       case 'half': return '50dvh';
@@ -72,7 +73,7 @@ export const BottomSheet: React.FC = () => {
       
       {/* Sheet */}
       <div 
-        className="fixed inset-x-0 bottom-0 sm:absolute sm:top-20 sm:bottom-auto sm:left-4 w-full sm:w-80 z-[60]"
+        className="fixed inset-x-0 bottom-0 sm:absolute sm:top-20 sm:bottom-auto sm:left-4 w-full sm:w-80 sm:max-h-[calc(100vh-6rem)] z-[60]"
         style={{
           height: getSheetHeight(),
           transform: `translateY(${Math.max(0, dragY)}px)`,
