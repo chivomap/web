@@ -1,6 +1,6 @@
 import React from 'react';
 import { Helmet } from "react-helmet";
-import { Nav, LayerModal } from '../index';
+import { LayerModal } from '../index';
 
 import { Map } from '../Map';
 

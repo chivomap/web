@@ -4,9 +4,6 @@ import { useAnnotationStore } from '../../../store/annotationStore';
 import { useBottomSheetStore } from '../../../store/bottomSheetStore';
 import { BiMap, BiBookmark, BiTrash, BiPin, BiShapePolygon } from 'react-icons/bi';
 
-type Tab = 'info' | 'annotations';
-type SheetState = 'peek' | 'half' | 'full';
-
 export const BottomSheet: React.FC = () => {
   const { selectedInfo, currentLevel, parentInfo, setCurrentLevel, setParentInfo, setDepartamentoGeojson } = useMapStore();
   const { annotations, removeAnnotation } = useAnnotationStore();

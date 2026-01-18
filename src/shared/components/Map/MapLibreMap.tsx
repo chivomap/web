@@ -7,7 +7,7 @@ import { env } from '../../config/env';
 import { MapStyle } from '../../data/mapStyles';
 import { useThemeStore } from '../../store/themeStore';
 
-import { MapControls, MapMarker, PolygonDisplay, MapStyleSelector, MapScale, BottomSheet, GeoLayer } from './Features';
+import { MapControls, MapMarker, PolygonDisplay, MapStyleSelector, MapScale, BottomSheet, GeoLayer, GeoDistritos } from './Features';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './popup-styles.css';
 
@@ -137,7 +137,7 @@ export const MapLibreMap: React.FC = () => {
               if (feature.id !== undefined) {
                 // Limpiar hover anterior
                 event.target.queryRenderedFeatures().forEach((f: any) => {
-                  if (f.source === 'distritos-source' && f.id !== feature.id) {
+                  if (f.source === 'distritos-source' && f.id !== feature.id && f.id !== undefined) {
                     event.target.setFeatureState(
                       { source: 'distritos-source', id: f.id },
                       { hover: false }
@@ -157,7 +157,7 @@ export const MapLibreMap: React.FC = () => {
             // Limpiar todos los hovers
             try {
               event.target.queryRenderedFeatures().forEach((f: any) => {
-                if (f.source === 'distritos-source') {
+                if (f.source === 'distritos-source' && f.id !== undefined) {
                   event.target.setFeatureState(
                     { source: 'distritos-source', id: f.id },
                     { hover: false }
@@ -183,6 +183,7 @@ export const MapLibreMap: React.FC = () => {
         {mapReady && (
           <>
             <GeoLayer />
+            <GeoDistritos />
             <BottomSheet />
             {clickPosition && <MapMarker position={clickPosition} />}
             {polygonCoords.length > 0 && (
