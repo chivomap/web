@@ -103,7 +103,7 @@ export const BottomSheet: React.FC = () => {
               else if (sheetState === 'half') setSheetState('full');
             }}
           >
-            <div className="w-12 h-1.5 bg-white/40 rounded-full" />
+            <div className="w-12 h-1.5 bg-secondary/40 rounded-full" />
           </div>
           
           {/* Tabs */}
@@ -112,7 +112,7 @@ export const BottomSheet: React.FC = () => {
               onClick={() => setActiveTab('info')}
               className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
                 activeTab === 'info' 
-                  ? 'text-white border-b-2 border-white' 
+                  ? 'text-white border-b-2 border-secondary' 
                   : 'text-white/60 hover:text-white/80'
               }`}
             >
@@ -123,7 +123,7 @@ export const BottomSheet: React.FC = () => {
               onClick={() => setActiveTab('annotations')}
               className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
                 activeTab === 'annotations' 
-                  ? 'text-white border-b-2 border-white' 
+                  ? 'text-white border-b-2 border-secondary' 
                   : 'text-white/60 hover:text-white/80'
               }`}
             >
@@ -162,7 +162,7 @@ export const BottomSheet: React.FC = () => {
                           setCurrentLevel('departamento');
                           setParentInfo(null);
                         }}
-                        className="flex items-center gap-3 text-sm font-medium text-white bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg transition-all w-full"
+                        className="flex items-center gap-3 text-sm font-medium text-white bg-secondary/20 hover:bg-secondary/30 px-4 py-3 rounded-lg transition-all w-full"
                       >
                         <span>←</span>
                         <span>Volver a {parentInfo.departamento}</span>
@@ -206,9 +206,9 @@ export const BottomSheet: React.FC = () => {
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-start gap-2 flex-1">
                           <div className="mt-1">
-                            {annotation.type === 'pin' && <BiPin className="text-red-400 text-lg" />}
-                            {annotation.type === 'drawn-polygon' && <MdOutlinePolyline className="text-purple-400 text-lg" />}
-                            {annotation.type === 'search-result' && <BiShapePolygon className="text-cyan-400 text-lg" />}
+                            {annotation.type === 'pin' && <BiPin className="text-secondary text-lg" />}
+                            {annotation.type === 'drawn-polygon' && <MdOutlinePolyline className="text-secondary text-lg" />}
+                            {annotation.type === 'search-result' && <BiShapePolygon className="text-secondary text-lg" />}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-white text-sm font-medium truncate">{annotation.name}</p>
@@ -252,7 +252,7 @@ export const BottomSheet: React.FC = () => {
                                 a.click();
                                 URL.revokeObjectURL(url);
                               }}
-                              className="p-1.5 hover:bg-white/10 rounded text-green-400"
+                              className="p-1.5 hover:bg-white/10 rounded text-secondary"
                               title="Exportar GeoJSON"
                             >
                               <BiDownload />
@@ -260,7 +260,7 @@ export const BottomSheet: React.FC = () => {
                           )}
                           <button
                             onClick={() => removeAnnotation(annotation.id)}
-                            className="p-1.5 hover:bg-white/10 rounded text-red-400"
+                            className="p-1.5 hover:bg-white/10 rounded text-secondary/70 hover:text-secondary"
                             title="Eliminar"
                           >
                             <BiTrash />
