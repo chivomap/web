@@ -16,6 +16,7 @@ export const MapLibreMap: React.FC = () => {
   const [mapReady, setMapReady] = useState<boolean>(false);
   const [clickPosition, setClickPosition] = useState<LngLat | null>(null);
   const [polygonCoords, setPolygonCoords] = useState<LngLat[]>([]);
+  const [hoverInfo, setHoverInfo] = useState<{ name: string; x: number; y: number } | null>(null);
   const { config, updateConfig, updatePolygon } = useMapStore();
   const { currentMapStyle, setMapStyle } = useThemeStore();
   const { center, zoom } = config;
@@ -110,6 +111,15 @@ export const MapLibreMap: React.FC = () => {
             const feature = event.features[0];
             if (feature.source === 'distritos-source') {
               event.target.getCanvas().style.cursor = 'pointer';
+              
+              // Mostrar tooltip
+              const name = feature.properties.NAM || feature.properties.M;
+              setHoverInfo({
+                name,
+                x: event.point.x,
+                y: event.point.y
+              });
+              
               if (feature.id !== undefined) {
                 // Limpiar hover anterior
                 event.target.queryRenderedFeatures().forEach((f: any) => {
@@ -129,6 +139,7 @@ export const MapLibreMap: React.FC = () => {
             }
           } else {
             event.target.getCanvas().style.cursor = '';
+            setHoverInfo(null);
             // Limpiar todos los hovers
             try {
               event.target.queryRenderedFeatures().forEach((f: any) => {
@@ -165,6 +176,19 @@ export const MapLibreMap: React.FC = () => {
           </>
         )}
       </Map>
+      
+      {/* Tooltip discreto */}
+      {hoverInfo && (
+        <div
+          className="fixed pointer-events-none z-50 bg-primary/95 backdrop-blur-sm text-white text-sm px-3 py-1.5 rounded-lg shadow-lg border border-white/10"
+          style={{
+            left: hoverInfo.x + 10,
+            top: hoverInfo.y + 10
+          }}
+        >
+          {hoverInfo.name}
+        </div>
+      )}
     </div>
   );
 };

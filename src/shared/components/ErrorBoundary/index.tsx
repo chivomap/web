@@ -47,31 +47,27 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
-            <div className="flex items-center mb-4">
-              <div className="flex-shrink-0">
-                <svg className="h-8 w-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="max-w-md w-full bg-primary/95 backdrop-blur-sm shadow-xl rounded-2xl p-8 border border-white/10">
+            <div className="flex flex-col items-center text-center">
+              <div className="mb-6">
+                <svg className="h-16 w-16 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
               </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-gray-800">
-                  Error en la aplicación
-                </h3>
-              </div>
-            </div>
-            <div className="mb-4">
-              <p className="text-sm text-gray-600">
+              <h3 className="text-xl font-semibold text-white mb-3">
+                Error en la aplicación
+              </h3>
+              <p className="text-sm text-white/80 mb-6">
                 {this.state.error?.userMessage || 'Ha ocurrido un error inesperado'}
               </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full bg-accent hover:bg-accent/80 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent/50 shadow-lg hover:shadow-xl hover:scale-[1.02]"
+              >
+                Recargar página
+              </button>
             </div>
-            <button
-              onClick={() => window.location.reload()}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              Recargar página
-            </button>
           </div>
         </div>
       );

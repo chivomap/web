@@ -250,7 +250,8 @@ export const GeoDistritos: React.FC = () => {
                     setPreviousGeojson(null);
                     setDepartamentoGeojson(null);
                   }}
-                  className="p-2 hover:bg-white/20 rounded-lg transition-colors text-white/80 hover:text-white"
+                  className="p-2.5 hover:bg-white/20 rounded-lg transition-all hover:scale-110 text-white/80 hover:text-white text-xl"
+                  title="Cerrar"
                 >
                   ✕
                 </button>
@@ -258,7 +259,7 @@ export const GeoDistritos: React.FC = () => {
             </div>
 
             {/* Content */}
-            <div className="p-4 space-y-4">
+            <div className="p-4 space-y-3">
               {/* Back button from municipio to departamento */}
               {parentInfo && !clickInfo && (
                 <button
@@ -279,10 +280,10 @@ export const GeoDistritos: React.FC = () => {
                     setParentInfo(null);
                     setClickInfo(null);
                   }}
-                  className="flex items-center gap-2 text-sm text-white/90 hover:text-white 
-                           hover:bg-white/10 px-3 py-2 rounded-lg transition-colors w-full"
+                  className="flex items-center gap-3 text-sm font-medium text-white bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg transition-all hover:scale-[1.02] w-full shadow-lg"
                 >
-                  ← Volver a {parentInfo.departamento}
+                  <span className="text-lg">←</span>
+                  <span>Volver a {parentInfo.departamento}</span>
                 </button>
               )}
 
@@ -306,10 +307,10 @@ export const GeoDistritos: React.FC = () => {
                     setClickInfo(null);
                     setCurrentLevel('departamento');
                   }}
-                  className="flex items-center gap-2 text-sm text-white/90 hover:text-white 
-                           hover:bg-white/10 px-3 py-2 rounded-lg transition-colors w-full"
+                  className="flex items-center gap-3 text-sm font-medium text-white bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg transition-all hover:scale-[1.02] w-full shadow-lg"
                 >
-                  ← Volver al departamento
+                  <span className="text-lg">←</span>
+                  <span>Volver al departamento</span>
                 </button>
               )}
 
@@ -323,10 +324,10 @@ export const GeoDistritos: React.FC = () => {
                     setClickInfo(null); // IMPORTANTE: Limpiar clickInfo
                     // Mantener currentLevel='distrito' y parentInfo
                   }}
-                  className="flex items-center gap-2 text-sm text-white/90 hover:text-white 
-                           hover:bg-white/10 px-3 py-2 rounded-lg transition-colors w-full"
+                  className="flex items-center gap-3 text-sm font-medium text-white bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg transition-all hover:scale-[1.02] w-full shadow-lg"
                 >
-                  ← Volver a {parentInfo.municipio}
+                  <span className="text-lg">←</span>
+                  <span>Volver a {parentInfo.municipio}</span>
                 </button>
               )}
 
