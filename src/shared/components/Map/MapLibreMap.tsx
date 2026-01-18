@@ -11,19 +11,15 @@ import { MapControls, MapMarker, PolygonDisplay, MapStyleSelector, MapScale, Bot
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './popup-styles.css';
 
-import { useLocation } from 'wouter';
-
 export const MapLibreMap: React.FC = () => {
   const [mapReady, setMapReady] = useState<boolean>(false);
   const [clickPosition, setClickPosition] = useState<LngLat | null>(null);
   const [polygonCoords, setPolygonCoords] = useState<LngLat[]>([]);
   const [hoverInfo, setHoverInfo] = useState<{ name: string; x: number; y: number } | null>(null);
-  const { config, updateConfig, updatePolygon } = useMapStore();
+  const { config, updateConfig } = useMapStore();
   const { addAnnotation } = useAnnotationStore();
   const { currentMapStyle, setMapStyle } = useThemeStore();
   const { center, zoom } = config;
-
-  const [, navigate] = useLocation();
 
   // Initialize map style from store
   const [mapStyle, setMapStyleState] = useState<string>(currentMapStyle.url);
@@ -75,17 +71,6 @@ export const MapLibreMap: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [handleKeyDown]);
-
-  const handleExport = () => {
-    // Guardar polígono en anotaciones
-    addAnnotation({
-      type: 'drawn-polygon',
-      name: `Polígono ${new Date().toLocaleTimeString('es-SV')}`,
-      data: { coordinates: polygonCoords },
-    });
-    updatePolygon(polygonCoords);
-    navigate('/export');
-  };
 
   const handleStyleChange = useCallback((style: MapStyle) => {
     setMapStyleState(style.url);
@@ -187,7 +172,7 @@ export const MapLibreMap: React.FC = () => {
             <BottomSheet />
             {clickPosition && <MapMarker position={clickPosition} />}
             {polygonCoords.length > 0 && (
-              <PolygonDisplay coordinates={polygonCoords} onExport={handleExport} />
+              <PolygonDisplay coordinates={polygonCoords} />
             )}
           </>
         )}

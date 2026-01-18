@@ -1,15 +1,13 @@
 import React from 'react';
 import { Source, Layer } from 'react-map-gl/maplibre';
 import { LngLat } from 'maplibre-gl';
-import { BiExport } from 'react-icons/bi';
 import type { LayerProps } from 'react-map-gl/maplibre';
 
 interface PolygonDisplayProps {
   coordinates: LngLat[];
-  onExport: () => void;
 }
 
-export const PolygonDisplay: React.FC<PolygonDisplayProps> = ({ coordinates, onExport }) => {
+export const PolygonDisplay: React.FC<PolygonDisplayProps> = ({ coordinates }) => {
   if (coordinates.length < 2) return null;
 
   // Convert coordinates to GeoJSON format
@@ -65,18 +63,6 @@ export const PolygonDisplay: React.FC<PolygonDisplayProps> = ({ coordinates, onE
         <Layer {...layerStyle} />
         {outlineStyle && <Layer {...outlineStyle} />}
       </Source>
-      
-      {coordinates.length > 2 && (
-        <div className="absolute bottom-20 right-[5%] sm:bottom-4 sm:right-4 z-10">
-          <button
-            onClick={onExport}
-            className="bg-primary hover:bg-primary/80 text-secondary px-3 py-2 sm:px-4 sm:py-2 rounded-lg shadow-lg flex items-center gap-2 transition-colors touch-manipulation"
-          >
-            <BiExport className="text-base sm:text-lg" />
-            <span className="text-sm sm:text-base">Exportar</span>
-          </button>
-        </div>
-      )}
     </>
   );
 };
