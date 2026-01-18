@@ -72,6 +72,8 @@ export const Search: React.FC = () => {
 
   const handleClick = async (query: string, whatIs: string) => {
     try {
+      // Ocultar lista inmediatamente y mostrar loading
+      setInputValue(query);
       setLoading(true);
       
       const data = await getQueryData(query, whatIs);
@@ -81,7 +83,6 @@ export const Search: React.FC = () => {
           type: whatIs === 'D' ? 'Departamento' : whatIs === 'M' ? 'Municipio' : 'Distrito',
           name: query
         });
-        setInputValue(query);
         
         // Guardar búsqueda en anotaciones
         addAnnotation({
@@ -139,7 +140,7 @@ export const Search: React.FC = () => {
     <form className="absolute w-full h-min justify-center items-center z-30 top-0 left-0 rounded out-top">
       {search && (
         <div className="flex w-[90%] mx-auto">
-          <SearchIcon className="text-white text-[40px] absolute inset-y-0 left-[5%] flex items-center pl-3 pointer-events-none z-30" />
+          <SearchIcon className="text-secondary text-[40px] absolute inset-y-0 left-[5%] flex items-center pl-3 pointer-events-none z-30" />
           <div className="w-full flex items-center justify-center">
             <input
               onChange={handleInputChange}
@@ -151,8 +152,8 @@ export const Search: React.FC = () => {
 
             {inputValue && (
               <ClearIcon
-                className="text-white text-[35px] absolute right-[5%] flex items-center pr-3 cursor-pointer z-30"
-                onClick={handleClearInput} // Limpiar el input al hacer clic
+                className="text-secondary text-[35px] absolute right-[5%] flex items-center pr-3 cursor-pointer z-30"
+                onClick={handleClearInput}
               />
             )}
           </div>
@@ -160,35 +161,35 @@ export const Search: React.FC = () => {
           {inputValue && !selectedInfo && (
             <section className="mt-[50px] h-min absolute w-full z-30 left-0 rounded-bl rounded-br out-top">
               <div className="flex w-[90%] mx-auto">
-                <div className="flex flex-col w-full p-0 text-sm bg-primary placeholder-gray-400 text-white rounded border-none outline-none">
-                  <p className="px-4 py-2 font-bold text-blue-300">
+                <div className="flex flex-col w-full p-0 text-sm bg-primary placeholder-gray-400 text-secondary rounded border-none outline-none">
+                  <p className="px-4 py-2 font-bold text-secondary/70">
                     Departamentos {filteredDepartamentos.length}
                   </p>
                   {filteredDepartamentos.map((depto, index) => (
                     <div key={index} onClick={() => handleClick(depto, 'D')}>
-                      <p className="w-full px-4 py-2 cursor-pointer hover:bg-slate-200/20">
+                      <p className="w-full px-4 py-2 cursor-pointer hover:bg-secondary/10">
                         {depto ?? 'Sin nombre'}
                       </p>
                     </div>
                   ))}
-                  <hr className="border-gray-400" />
-                  <p className="px-4 py-2 font-bold text-blue-300">
+                  <hr className="border-secondary/20" />
+                  <p className="px-4 py-2 font-bold text-secondary/70">
                     Municipios {filteredMunicipios.length}
                   </p>
                   {filteredMunicipios.map((muni, index) => (
                     <div key={index} onClick={() => handleClick(muni, 'M')}>
-                      <p className="w-full px-4 py-2 cursor-pointer hover:bg-slate-200/20">
+                      <p className="w-full px-4 py-2 cursor-pointer hover:bg-secondary/10">
                         {muni ?? 'Sin nombre'}
                       </p>
                     </div>
                   ))}
-                  <hr className="border-gray-400" />
-                  <p className="px-4 py-2 font-bold text-blue-300">
+                  <hr className="border-secondary/20" />
+                  <p className="px-4 py-2 font-bold text-secondary/70">
                     Distritos {filteredDistritos.length}
                   </p>
                   {filteredDistritos.map((distrito, index) => (
                     <div key={index} onClick={() => handleClick(distrito, 'NAM')}>
-                      <p className="w-full px-4 py-2 cursor-pointer hover:bg-slate-200/20">
+                      <p className="w-full px-4 py-2 cursor-pointer hover:bg-secondary/10">
                         {distrito}
                       </p>
                     </div>
