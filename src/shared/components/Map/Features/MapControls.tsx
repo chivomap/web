@@ -43,40 +43,40 @@ export const MapControls: React.FC = () => {
       <div className="bg-primary shadow-lg rounded-lg overflow-hidden">
         <button
           onClick={zoomIn}
-          className="block w-8 h-8 sm:w-10 sm:h-10 bg-primary hover:bg-primary/80 transition-colors border-b border-primary/20 touch-manipulation"
+          className="block w-10 h-10 sm:w-10 sm:h-10 bg-primary hover:bg-primary/80 transition-colors border-b border-primary/20 touch-manipulation"
           title="Acercar"
         >
-          <BiPlus className="text-secondary text-lg sm:text-xl mx-auto" />
+          <BiPlus className="text-secondary text-xl sm:text-xl mx-auto" />
         </button>
         <button
           onClick={zoomOut}
-          className="block w-8 h-8 sm:w-10 sm:h-10 bg-primary hover:bg-primary/80 transition-colors touch-manipulation"
+          className="block w-10 h-10 sm:w-10 sm:h-10 bg-primary hover:bg-primary/80 transition-colors touch-manipulation"
           title="Alejar"
         >
-          <BiMinus className="text-secondary text-lg sm:text-xl mx-auto" />
+          <BiMinus className="text-secondary text-xl sm:text-xl mx-auto" />
         </button>
       </div>
 
       {/* Fullscreen Control */}
       <button
         onClick={toggleFullscreen}
-        className="w-8 h-8 sm:w-10 sm:h-10 bg-primary shadow-lg rounded-lg hover:bg-primary/80 transition-colors touch-manipulation"
+        className="w-10 h-10 sm:w-10 sm:h-10 bg-primary shadow-lg rounded-lg hover:bg-primary/80 transition-colors touch-manipulation"
         title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
       >
         {isFullscreen ? (
-          <BiExitFullscreen className="text-secondary text-lg sm:text-xl mx-auto" />
+          <BiExitFullscreen className="text-secondary text-xl sm:text-xl mx-auto" />
         ) : (
-          <BiFullscreen className="text-secondary text-lg sm:text-xl mx-auto" />
+          <BiFullscreen className="text-secondary text-xl sm:text-xl mx-auto" />
         )}
       </button>
 
       {/* Annotations Button */}
       <button
         onClick={openAnnotations}
-        className="relative w-8 h-8 sm:w-10 sm:h-10 bg-primary shadow-lg rounded-lg hover:bg-primary/80 transition-colors touch-manipulation"
+        className="relative w-10 h-10 sm:w-10 sm:h-10 bg-primary shadow-lg rounded-lg hover:bg-primary/80 transition-colors touch-manipulation"
         title="Anotaciones"
       >
-        <BiMap className="text-secondary text-lg sm:text-xl mx-auto" />
+        <BiMap className="text-secondary text-xl sm:text-xl mx-auto" />
         {annotations.length > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
             {annotations.length}

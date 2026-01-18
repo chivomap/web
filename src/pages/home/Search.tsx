@@ -139,31 +139,30 @@ export const Search: React.FC = () => {
   return (
     <form className="absolute w-full h-min justify-center items-center z-30 top-0 left-0 rounded out-top">
       {search && (
-        <div className="flex w-[90%] mx-auto">
-          <SearchIcon className="text-secondary text-[40px] absolute inset-y-0 left-[5%] flex items-center pl-3 pointer-events-none z-30" />
+        <div className="flex w-[90%] mx-auto relative">
+          <SearchIcon className="text-secondary text-2xl absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none z-30" />
           <div className="w-full flex items-center justify-center">
             <input
               onChange={handleInputChange}
               value={inputValue}
               type="text"
               placeholder="Busca distritos, municipios, departamentos"
-              className="relative w-full p-3 pl-[50px] text-sm bg-primary placeholder-gray-400 text-white rounded border-none outline-none"
+              className="relative w-full h-12 px-4 pl-12 text-sm bg-primary placeholder-gray-400 text-secondary rounded-lg border-none outline-none"
             />
 
             {inputValue && (
               <ClearIcon
-                className="text-secondary text-[35px] absolute right-[5%] flex items-center pr-3 cursor-pointer z-30"
+                className="text-secondary text-2xl absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer z-30 hover:text-secondary/70 transition-colors"
                 onClick={handleClearInput}
               />
             )}
           </div>
 
           {inputValue && !selectedInfo && (
-            <section className="mt-[50px] h-min absolute w-full z-30 left-0 rounded-bl rounded-br out-top">
-              <div className="flex w-[90%] mx-auto">
-                <div className="flex flex-col w-full p-0 text-sm bg-primary placeholder-gray-400 text-secondary rounded border-none outline-none">
-                  <p className="px-4 py-2 font-bold text-secondary/70">
-                    Departamentos {filteredDepartamentos.length}
+            <section className="mt-[52px] h-min absolute w-full z-30 left-0 rounded-bl rounded-br out-top">
+              <div className="flex flex-col w-full p-0 text-sm bg-primary placeholder-gray-400 text-white rounded-lg border-none outline-none shadow-lg">
+                <p className="px-4 py-2 font-bold text-secondary">
+                    Departamentos <span className="text-white/60">{filteredDepartamentos.length}</span>
                   </p>
                   {filteredDepartamentos.map((depto, index) => (
                     <div key={index} onClick={() => handleClick(depto, 'D')}>
@@ -173,8 +172,8 @@ export const Search: React.FC = () => {
                     </div>
                   ))}
                   <hr className="border-secondary/20" />
-                  <p className="px-4 py-2 font-bold text-secondary/70">
-                    Municipios {filteredMunicipios.length}
+                  <p className="px-4 py-2 font-bold text-secondary">
+                    Municipios <span className="text-white/60">{filteredMunicipios.length}</span>
                   </p>
                   {filteredMunicipios.map((muni, index) => (
                     <div key={index} onClick={() => handleClick(muni, 'M')}>
@@ -184,8 +183,8 @@ export const Search: React.FC = () => {
                     </div>
                   ))}
                   <hr className="border-secondary/20" />
-                  <p className="px-4 py-2 font-bold text-secondary/70">
-                    Distritos {filteredDistritos.length}
+                  <p className="px-4 py-2 font-bold text-secondary">
+                    Distritos <span className="text-white/60">{filteredDistritos.length}</span>
                   </p>
                   {filteredDistritos.map((distrito, index) => (
                     <div key={index} onClick={() => handleClick(distrito, 'NAM')}>
@@ -195,7 +194,6 @@ export const Search: React.FC = () => {
                     </div>
                   ))}
                 </div>
-              </div>
             </section>
           )}
         </div>

@@ -94,7 +94,7 @@ export const BottomSheet: React.FC = () => {
           
           {/* Handle - área arrastrable */}
           <div 
-            className="sm:hidden w-full flex justify-center pt-3 pb-2 flex-shrink-0 cursor-grab active:cursor-grabbing"
+            className="sm:hidden w-full flex justify-center pt-4 pb-4 flex-shrink-0 cursor-grab active:cursor-grabbing"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
@@ -103,7 +103,7 @@ export const BottomSheet: React.FC = () => {
               else if (sheetState === 'half') setSheetState('full');
             }}
           >
-            <div className="w-10 h-1 bg-white/40 rounded-full" />
+            <div className="w-12 h-1.5 bg-white/40 rounded-full" />
           </div>
           
           {/* Tabs */}

@@ -23,13 +23,13 @@ export const MapStyleSelector: React.FC<MapStyleSelectorProps> = ({
     <div className="absolute top-20 left-[5%] sm:top-4 sm:left-4 z-10">
       <button
         onClick={toggleStyle}
-        className="bg-primary shadow-lg rounded-lg p-2 sm:p-3 hover:bg-primary/80 transition-colors touch-manipulation"
+        className="w-10 h-10 bg-primary shadow-lg rounded-lg hover:bg-primary/80 transition-colors touch-manipulation flex items-center justify-center"
         title={`Cambiar a modo ${isDark ? 'claro' : 'oscuro'}`}
       >
         {isDark ? (
-          <BiSun className="text-secondary text-lg sm:text-xl" />
+          <BiSun className="text-secondary text-xl" />
         ) : (
-          <BiMoon className="text-secondary text-lg sm:text-xl" />
+          <BiMoon className="text-secondary text-xl" />
         )}
       </button>
     </div>
