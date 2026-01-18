@@ -1,14 +1,25 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Helmet } from "react-helmet";
 import { LayerModal } from '../index';
 
-import { Map } from '../Map';
+const Map = lazy(() => import('../Map').then(m => ({ default: m.Map })));
+
+const MapLoader = () => (
+  <div className="fixed inset-0 bg-primary flex items-center justify-center">
+    <div className="text-center">
+      <div className="w-12 h-12 border-3 border-secondary/30 border-t-secondary rounded-full animate-spin mx-auto mb-4"></div>
+      <p className="text-secondary text-lg">Cargando mapa...</p>
+    </div>
+  </div>
+);
 
 export const MapLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <>
-      {/* Mapa */}
-      <Map />
+      {/* Mapa con lazy loading */}
+      <Suspense fallback={<MapLoader />}>
+        <Map />
+      </Suspense>
       <Helmet>
         {/* Título y descripción */}
         <title>Chivo Map | El Salvador</title>
