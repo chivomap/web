@@ -17,7 +17,7 @@ export const Search: React.FC = () => {
   const [inputValue, setInputValue] = useState<string>('');
   const { layoutStates } = useLayoutStore();
   const { search, department } = layoutStates;
-  const { updateGeojson, setSelectedInfo, setCurrentLevel, setParentInfo } = useMapStore();
+  const { updateGeojson, setSelectedInfo, setCurrentLevel, setParentInfo, selectedInfo } = useMapStore();
   const { showError, setLoading } = useErrorStore();
 
   useEffect(() => {
@@ -48,36 +48,47 @@ export const Search: React.FC = () => {
   }, [setLoading, showError]);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(event.target.value);
+    const newValue = event.target.value;
+    setInputValue(newValue);
+    
+    // Si hay algo seleccionado y el usuario escribe algo diferente, limpiar
+    if (selectedInfo && newValue !== selectedInfo.name) {
+      updateGeojson(null);
+      setSelectedInfo(null);
+      setCurrentLevel('departamento');
+      setParentInfo(null);
+    }
   };
 
   const handleClearInput = () => {
     setInputValue('');
+    updateGeojson(null);
+    setSelectedInfo(null);
+    setCurrentLevel('departamento');
+    setParentInfo(null);
   }
 
   const handleClick = async (query: string, whatIs: string) => {
     try {
-      setInputValue('');
       setLoading(true);
       
       const data = await getQueryData(query, whatIs);
       if (data) {
         updateGeojson(data);
-        // Set selected info for the panel
         setSelectedInfo({
           type: whatIs === 'D' ? 'Departamento' : whatIs === 'M' ? 'Municipio' : 'Distrito',
           name: query
         });
+        setInputValue(query);
         
-        // Set navigation level
         if (whatIs === 'D') {
-          setCurrentLevel('departamento'); // Mostrar municipios
+          setCurrentLevel('departamento');
           setParentInfo(null);
         } else if (whatIs === 'M') {
-          setCurrentLevel('distrito'); // Mostrar distritos
+          setCurrentLevel('distrito');
           setParentInfo({ municipio: query });
         } else {
-          setCurrentLevel('distrito'); // Mostrar distrito específico
+          setCurrentLevel('distrito');
         }
       } else {
         showError(errorHandler.handle(new Error('No se encontraron datos para la búsqueda')));
@@ -90,11 +101,14 @@ export const Search: React.FC = () => {
     }
   };
 
-  const handleBlur = () => {
-    setTimeout(() => {
+  // Sincronizar input con selectedInfo
+  useEffect(() => {
+    if (selectedInfo) {
+      setInputValue(selectedInfo.name);
+    } else {
       setInputValue('');
-    }, 200);
-  };
+    }
+  }, [selectedInfo]);
 
   const filteredDepartamentos = geoData.departamentos.filter(depto =>
     depto?.toLowerCase().includes(inputValue.toLowerCase())
@@ -114,7 +128,6 @@ export const Search: React.FC = () => {
           <div className="w-full flex items-center justify-center">
             <input
               onChange={handleInputChange}
-              onBlur={handleBlur}
               value={inputValue}
               type="text"
               placeholder="Busca distritos, municipios, departamentos"
@@ -129,7 +142,7 @@ export const Search: React.FC = () => {
             )}
           </div>
 
-          {inputValue && (
+          {inputValue && !selectedInfo && (
             <section className="mt-[50px] h-min absolute w-full z-30 left-0 rounded-bl rounded-br out-top">
               <div className="flex w-[90%] mx-auto">
                 <div className="flex flex-col w-full p-0 text-sm bg-primary placeholder-gray-400 text-white rounded border-none outline-none">

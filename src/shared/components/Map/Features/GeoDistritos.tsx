@@ -1,17 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Source, Layer, Popup, useMap } from 'react-map-gl/maplibre';
+import { Source, Layer } from 'react-map-gl/maplibre';
 import { useMapStore } from '../../../store/mapStore';
-import { useThemeStore } from '../../../store/themeStore';
 import { env, isDevelopment } from '../../../config/env';
 import type { LayerProps } from 'react-map-gl/maplibre';
-import { MapLegend } from './MapLegend';
 
 export const GeoDistritos: React.FC = () => {
   const { geojson, selectedInfo, currentLevel, parentInfo, setCurrentLevel, setParentInfo, previousGeojson, setPreviousGeojson, departamentoGeojson, setDepartamentoGeojson } = useMapStore();
-  const { currentMapStyle } = useThemeStore();
   const [clickInfo, setClickInfo] = useState<any>(null);
-
-  const isDark = currentMapStyle.name === 'Oscuro';
 
   // Guardar GeoJSON del departamento cuando se carga por primera vez
   useEffect(() => {
@@ -49,7 +44,7 @@ export const GeoDistritos: React.FC = () => {
             id: feature.id
           };
           
-          const singleDistrictGeoJSON = {
+          const singleDistrictGeoJSON: any = {
             type: 'FeatureCollection' as const,
             features: [cleanFeature]
           };

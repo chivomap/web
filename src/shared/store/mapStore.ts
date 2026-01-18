@@ -40,6 +40,12 @@ export const useMapStore = create<MapState>((set) => ({
   geojson: null,
   updateGeojson: (newGeojson) => {
     try {
+      // Si es null, limpiar el geojson
+      if (!newGeojson) {
+        set(() => ({ geojson: null }));
+        return;
+      }
+      
       if (newGeojson && Array.isArray(newGeojson.features) && newGeojson.features.length > 0) {
         set(() => ({ geojson: newGeojson }));
 
