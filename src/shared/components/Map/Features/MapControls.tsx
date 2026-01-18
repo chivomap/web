@@ -2,11 +2,13 @@ import React from 'react';
 import { useMap } from 'react-map-gl/maplibre';
 import { BiPlus, BiMinus, BiFullscreen, BiExitFullscreen, BiMap } from 'react-icons/bi';
 import { useAnnotationStore } from '../../../store/annotationStore';
+import { useBottomSheetStore } from '../../../store/bottomSheetStore';
 
 export const MapControls: React.FC = () => {
   const { current: map } = useMap();
   const [isFullscreen, setIsFullscreen] = React.useState(false);
   const { annotations } = useAnnotationStore();
+  const { openAnnotations } = useBottomSheetStore();
 
   const zoomIn = () => {
     if (map) map.zoomIn();
@@ -70,10 +72,7 @@ export const MapControls: React.FC = () => {
 
       {/* Annotations Button */}
       <button
-        onClick={() => {
-          const event = new CustomEvent('toggle-annotations');
-          window.dispatchEvent(event);
-        }}
+        onClick={openAnnotations}
         className="relative w-8 h-8 sm:w-10 sm:h-10 bg-primary shadow-lg rounded-lg hover:bg-primary/80 transition-colors touch-manipulation"
         title="Anotaciones"
       >

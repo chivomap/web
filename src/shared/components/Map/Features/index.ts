@@ -8,4 +8,5 @@ export { MapLegend } from './MapLegend';
 export { NavigationBreadcrumb } from './NavigationBreadcrumb';
 export { AnnotationsPanel } from './AnnotationsPanel';
 export { BottomSheet } from './BottomSheet';
+export { GeoLayer } from './GeoLayer';
 export { ProjectInfo } from './ProjectInfo';

@@ -51,10 +51,10 @@ export const MapLayout: React.FC<{ children: React.ReactNode }> = ({ children })
         {/* Contenido adicional opcional */}
       </div>
 
-      {/* Navegación */}
-      <div className="fixed max-h-[80px] gap-2 bottom-2 w-full flex justify-center z-50 out-bottom">
+      {/* Navegación - Oculta temporalmente */}
+      {/* <div className="fixed max-h-[80px] gap-2 bottom-2 w-full flex justify-center z-50 out-bottom">
         <Nav />
-      </div>
+      </div> */}
 
       {/* Modal */}
       <LayerModal />

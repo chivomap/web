@@ -7,7 +7,7 @@ import { env } from '../../config/env';
 import { MapStyle } from '../../data/mapStyles';
 import { useThemeStore } from '../../store/themeStore';
 
-import { MapControls, MapMarker, PolygonDisplay, GeoDistritos, MapStyleSelector, MapScale, BottomSheet } from './Features';
+import { MapControls, MapMarker, PolygonDisplay, MapStyleSelector, MapScale, BottomSheet, GeoLayer } from './Features';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './popup-styles.css';
 
@@ -182,7 +182,8 @@ export const MapLibreMap: React.FC = () => {
         <MapScale />
         {mapReady && (
           <>
-            <GeoDistritos />
+            <GeoLayer />
+            <BottomSheet />
             {clickPosition && <MapMarker position={clickPosition} />}
             {polygonCoords.length > 0 && (
               <PolygonDisplay coordinates={polygonCoords} onExport={handleExport} />
@@ -203,9 +204,6 @@ export const MapLibreMap: React.FC = () => {
           {hoverInfo.name}
         </div>
       )}
-      
-      {/* Panel de anotaciones */}
-      <BottomSheet />
     </div>
   );
 };

@@ -1,23 +1,21 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useMapStore } from '../../../store/mapStore';
 import { useAnnotationStore } from '../../../store/annotationStore';
-import { BiMap, BiBookmark, BiTrash, BiCopy, BiDownload, BiDotsVerticalRounded, BiImage, BiPin, BiShapePolygon } from 'react-icons/bi';
+import { useBottomSheetStore } from '../../../store/bottomSheetStore';
+import { BiMap, BiBookmark, BiTrash, BiPin, BiShapePolygon } from 'react-icons/bi';
 
 type Tab = 'info' | 'annotations';
 type SheetState = 'peek' | 'half' | 'full';
 
 export const BottomSheet: React.FC = () => {
-  const { selectedInfo, clickInfo, currentLevel, parentInfo, setCurrentLevel, setParentInfo, previousGeojson, setPreviousGeojson, setDepartamentoGeojson } = useMapStore();
-  const { annotations, removeAnnotation, clearAnnotations, exportAllAsGeoJSON } = useAnnotationStore();
+  const { selectedInfo, currentLevel, parentInfo, setCurrentLevel, setParentInfo, setDepartamentoGeojson } = useMapStore();
+  const { annotations, removeAnnotation } = useAnnotationStore();
+  const { activeTab, sheetState, setActiveTab, setSheetState } = useBottomSheetStore();
   
-  const [activeTab, setActiveTab] = useState<Tab>('info');
-  const [sheetState, setSheetState] = useState<SheetState>('peek');
-  const [dragY, setDragY] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [activeItemMenu, setActiveItemMenu] = useState<string | null>(null);
-  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [dragY, setDragY] = React.useState(0);
+  const [isDragging, setIsDragging] = React.useState(false);
 
-  const isOpen = !!(selectedInfo || clickInfo || annotations.length > 0);
+  const isOpen = !!(selectedInfo || annotations.length > 0);
 
   const getSheetHeight = () => {
     switch (sheetState) {
@@ -60,7 +58,6 @@ export const BottomSheet: React.FC = () => {
     useMapStore.getState().updateGeojson(null);
     setCurrentLevel('departamento');
     setParentInfo(null);
-    setPreviousGeojson(null);
     setDepartamentoGeojson(null);
   };
 
@@ -128,12 +125,101 @@ export const BottomSheet: React.FC = () => {
           {/* Content */}
           <div className="flex-1 overflow-y-auto">
             {activeTab === 'info' ? (
-              <div className="p-4">
-                <p className="text-white">Vista de información - TODO: Migrar contenido de GeoDistritos</p>
+              // Vista de Información
+              <div className="p-4 space-y-3">
+                {selectedInfo && (
+                  <>
+                    <div className="mb-3">
+                      <h3 className="font-bold text-lg text-white">{selectedInfo.name}</h3>
+                      <p className="text-sm text-white/70">{selectedInfo.type}</p>
+                    </div>
+                    
+                    {/* Botones de navegación */}
+                    {parentInfo && (
+                      <button
+                        onClick={async () => {
+                          if (selectedInfo?.name) {
+                            try {
+                              const { getQueryData } = await import('../../../services/GetQueryData');
+                              const departamentoData = await getQueryData(selectedInfo.name, 'D');
+                              if (departamentoData) {
+                                useMapStore.getState().updateGeojson(departamentoData);
+                              }
+                            } catch (error) {
+                              console.error('Error:', error);
+                            }
+                          }
+                          setCurrentLevel('departamento');
+                          setParentInfo(null);
+                        }}
+                        className="flex items-center gap-3 text-sm font-medium text-white bg-white/10 hover:bg-white/20 px-4 py-3 rounded-lg transition-all w-full"
+                      >
+                        <span>←</span>
+                        <span>Volver a {parentInfo.departamento}</span>
+                      </button>
+                    )}
+                    
+                    {/* Leyenda de colores */}
+                    {currentLevel === 'departamento' && (
+                      <div className="border-t border-white/20 pt-3 mt-3">
+                        <h4 className="text-sm font-medium text-white mb-2">Colores por región</h4>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          {[
+                            { region: 'Centro', color: '#06b6d4' },
+                            { region: 'Norte', color: '#22c55e' },
+                            { region: 'Sur', color: '#f97316' },
+                            { region: 'Este', color: '#e11d48' },
+                            { region: 'Oeste', color: '#a855f7' }
+                          ].map(({ region, color }) => (
+                            <div key={region} className="flex items-center gap-2 p-2 bg-white/5 rounded">
+                              <div className="w-3 h-3 rounded border border-white/30" style={{ backgroundColor: color }} />
+                              <span className="text-white/90">{region}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+                {!selectedInfo && <p className="text-white/60 text-center py-8">No hay información seleccionada</p>}
               </div>
             ) : (
-              <div className="p-4">
-                <p className="text-white">Vista de anotaciones - TODO: Migrar contenido de AnnotationsPanel</p>
+              // Vista de Anotaciones
+              <div>
+                {annotations.length === 0 ? (
+                  <div className="p-8 text-center text-white/60 text-sm">
+                    No hay anotaciones aún
+                  </div>
+                ) : (
+                  annotations.map((annotation) => (
+                    <div key={annotation.id} className="p-3 border-b border-white/10 hover:bg-white/5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-start gap-2 flex-1">
+                          <div className="mt-1">
+                            {annotation.type === 'pin' && <BiPin className="text-red-500" />}
+                            {annotation.type === 'drawn-polygon' && <BiShapePolygon className="text-blue-500" />}
+                            {annotation.type === 'search-result' && <BiMap className="text-green-500" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white text-sm font-medium truncate">{annotation.name}</p>
+                            <p className="text-white/60 text-xs">
+                              {new Date(annotation.createdAt).toLocaleString('es-SV', {
+                                dateStyle: 'short',
+                                timeStyle: 'short',
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => removeAnnotation(annotation.id)}
+                          className="p-1 hover:bg-white/10 rounded text-red-400"
+                        >
+                          <BiTrash />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             )}
           </div>

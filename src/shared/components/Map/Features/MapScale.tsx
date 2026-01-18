@@ -40,10 +40,10 @@ export const MapScale: React.FC = () => {
   if (!scale) return null;
 
   return (
-    <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 sm:bottom-4 sm:left-4 sm:transform-none z-10">
-      <div className="sm:bg-primary/90 sm:backdrop-blur-sm rounded px-2 py-1 sm:shadow-lg">
-        <div className="flex items-center gap-1 sm:gap-2">
-          <div className="w-12 sm:w-16 h-0.5 bg-secondary"></div>
+    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 sm:left-4 sm:transform-none z-10">
+      <div className="bg-primary/90 backdrop-blur-sm rounded px-2 py-1 shadow-lg">
+        <div className="flex items-center gap-2">
+          <div className="w-16 h-0.5 bg-secondary"></div>
           <span className="text-secondary text-xs font-medium">{scale}</span>
         </div>
       </div>

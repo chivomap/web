@@ -16,13 +16,6 @@ export const AnnotationsPanel: React.FC = () => {
     return () => window.removeEventListener('toggle-annotations', handleToggle);
   }, []);
 
-  // Cerrar al tocar fuera
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      setIsOpen(false);
-    }
-  };
-
   // Swipe para cerrar
   const handleTouchStart = (e: React.TouchEvent) => {
     setStartY(e.touches[0].clientY);
