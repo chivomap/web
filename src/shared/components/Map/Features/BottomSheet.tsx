@@ -210,23 +210,29 @@ export const BottomSheet: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-1">
-                          {annotation.type === 'drawn-polygon' && (
+                          {(annotation.type === 'drawn-polygon' || annotation.type === 'search-result') && (
                             <button
                               onClick={() => {
-                                const coords = Array.isArray(annotation.data.coordinates) 
-                                  ? annotation.data.coordinates 
-                                  : [annotation.data.coordinates];
-                                const geojson = {
-                                  type: 'FeatureCollection',
-                                  features: [{
-                                    type: 'Feature',
-                                    properties: { name: annotation.name },
-                                    geometry: {
-                                      type: 'Polygon',
-                                      coordinates: [coords.map((c: any) => [c.lng, c.lat])]
-                                    }
-                                  }]
-                                };
+                                let geojson;
+                                if (annotation.type === 'drawn-polygon') {
+                                  const coords = Array.isArray(annotation.data.coordinates) 
+                                    ? annotation.data.coordinates 
+                                    : [annotation.data.coordinates];
+                                  geojson = {
+                                    type: 'FeatureCollection',
+                                    features: [{
+                                      type: 'Feature',
+                                      properties: { name: annotation.name },
+                                      geometry: {
+                                        type: 'Polygon',
+                                        coordinates: [coords.map((c: any) => [c.lng, c.lat])]
+                                      }
+                                    }]
+                                  };
+                                } else {
+                                  // search-result ya tiene el geojson completo
+                                  geojson = annotation.data.geojson || annotation.data;
+                                }
                                 const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: 'application/json' });
                                 const url = URL.createObjectURL(blob);
                                 const a = document.createElement('a');

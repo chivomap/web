@@ -19,7 +19,7 @@ export const MapLibreMap: React.FC = () => {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; lngLat: LngLat } | null>(null);
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const { config, updateConfig } = useMapStore();
-  const { addAnnotation } = useAnnotationStore();
+  const { addAnnotation, annotations } = useAnnotationStore();
   const { currentMapStyle, setMapStyle } = useThemeStore();
   const { center, zoom } = config;
 
@@ -190,6 +190,10 @@ export const MapLibreMap: React.FC = () => {
             <GeoDistritos />
             <BottomSheet />
             {clickPosition && <MapMarker position={clickPosition} />}
+            {/* Renderizar pins de anotaciones */}
+            {annotations.filter(a => a.type === 'pin' && a.data?.coordinates).map(annotation => (
+              <MapMarker key={annotation.id} position={annotation.data.coordinates as LngLat} />
+            ))}
             {polygonCoords.length > 0 && (
               <PolygonDisplay coordinates={polygonCoords} />
             )}
