@@ -8,6 +8,7 @@
     
     <!-- Preconnect a APIs críticas -->
     <link rel="preconnect" href="http://localhost:8080" crossorigin />
+    <link rel="dns-prefetch" href="http://localhost:8080" />
     
     <!-- Critical CSS inline para FCP -->
     <style>
@@ -16,6 +17,7 @@
         font-family: system-ui, -apple-system, sans-serif;
         background: #333;
         color: #93c5fd;
+        overflow: hidden;
       }
       #splash {
         position: fixed;
@@ -53,6 +55,10 @@
         display: none;
       }
     </style>
+    
+    <!-- Defer non-critical CSS -->
+    <link rel="preload" href="/src/index.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="/src/index.css"></noscript>
   </head>
   <body>
     <!-- Splash screen - se muestra inmediatamente -->

@@ -8,7 +8,6 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          // Separar vendor chunks grandes
           'maplibre': ['maplibre-gl'],
           'react-vendor': ['react', 'react-dom'],
           'utils': ['zustand', 'fuse.js'],
@@ -16,5 +15,7 @@ export default defineConfig({
       }
     },
     chunkSizeWarningLimit: 600,
+    cssCodeSplit: true,
+    minify: 'esbuild',
   },
 })
