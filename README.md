@@ -1,50 +1,122 @@
-# React + TypeScript + Vite
+# ChivoMap 🗺️
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicación web interactiva para visualización y análisis de datos geográficos de El Salvador.
 
-Currently, two official plugins are available:
+![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)
+![Version](https://img.shields.io/badge/version-2.0.0-green.svg)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🌟 Características
 
-## Expanding the ESLint configuration
+- 🔍 Búsqueda de departamentos, municipios y distritos
+- 📍 Sistema de anotaciones (pins, polígonos)
+- ✏️ Dibujo manual de polígonos
+- 📥 Exportación a GeoJSON
+- 🗺️ Múltiples estilos de mapa
+- 📱 Diseño responsive (móvil y desktop)
+- 🎨 Navegación jerárquica con colores por región
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## 🚀 Tecnologías
 
-- Configure the top-level `parserOptions` property like this:
+- **React 18** + TypeScript
+- **MapLibre GL JS** - Mapas interactivos
+- **Tailwind CSS** - Estilos
+- **Zustand** - Estado global
+- **Turf.js** - Análisis geoespacial
+- **Vite** - Build tool
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## 📦 Instalación
+
+```bash
+# Clonar repositorio
+git clone https://github.com/chivomap/web.git
+cd web
+
+# Instalar dependencias
+pnpm install
+
+# Desarrollo
+pnpm dev
+
+# Build para producción
+pnpm build
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## 🎯 Uso
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+### Búsqueda
+- Escribe el nombre de un departamento, municipio o distrito
+- Selecciona de los resultados para visualizar en el mapa
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+### Anotaciones
+- **Click derecho** → Menú contextual con opciones
+- **Agregar pin** → Marca un punto en el mapa
+- **Dibujar polígono** → Activa modo dibujo manual
+- **Exportar** → Descarga como GeoJSON
+
+### Navegación
+- Click en polígonos para navegar entre niveles
+- Departamento → Municipio → Distrito
+- Botones de "Volver" para regresar
+
+## 📄 Licencia
+
+Este proyecto está licenciado bajo **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+
+### ¿Qué significa esto?
+
+✅ **Puedes:**
+- Usar el software libremente
+- Modificarlo según tus necesidades
+- Distribuirlo
+- Usarlo comercialmente
+
+❌ **Debes:**
+- Mantener la misma licencia AGPL-3.0
+- Compartir el código fuente de cualquier modificación
+- Si lo usas como servicio web, hacer el código disponible a los usuarios
+
+### ¿Por qué AGPL?
+
+Esta licencia protege que ChivoMap siempre sea **software libre y de código abierto**. Evita que:
+- Gobiernos o empresas hagan versiones privadas
+- Se comercialice sin compartir mejoras con la comunidad
+- Se cierre el acceso al código fuente
+
+Para más detalles, ver [LICENSE](./LICENSE) o https://www.gnu.org/licenses/agpl-3.0.html
+
+## 👨‍💻 Desarrollador
+
+**Eliseo Arévalo**
+- Website: [eliseo-arevalo.github.io](https://eliseo-arevalo.github.io/)
+- GitHub: [@eliseo-arevalo](https://github.com/eliseo-arevalo)
+
+## 🤝 Contribuir
+
+¡Las contribuciones son bienvenidas! Este es un proyecto comunitario.
+
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+Ver [CONTRIBUTING.md](./CONTRIBUTING.md) para más detalles.
+
+## 🏢 Organización
+
+Este proyecto es parte de [ChivoMap](https://github.com/chivomap) - Una iniciativa para democratizar el acceso a datos geográficos de El Salvador.
+
+## 📞 Soporte
+
+- Issues: [GitHub Issues](https://github.com/chivomap/web/issues)
+- Discusiones: [GitHub Discussions](https://github.com/chivomap/web/discussions)
+
+## 🙏 Agradecimientos
+
+- Datos geográficos de El Salvador
+- Comunidad open source
+- Contribuidores del proyecto
+
+---
+
+**Nota importante sobre la licencia:** Si planeas usar ChivoMap en tu organización o modificarlo, por favor lee cuidadosamente la licencia AGPL-3.0. Si tienes dudas sobre cómo cumplir con los términos, abre un issue para discutirlo.

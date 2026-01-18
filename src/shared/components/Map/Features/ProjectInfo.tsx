@@ -103,6 +103,17 @@ export const ProjectInfo: React.FC = () => {
                 <h3 className="font-semibold text-secondary mb-2">Versión</h3>
                 <p className="text-secondary/80 text-sm">v2.0.0 - MapLibre Edition</p>
               </div>
+
+              {/* License */}
+              <div>
+                <h3 className="font-semibold text-secondary mb-2">Licencia</h3>
+                <p className="text-secondary/80 text-sm mb-2">
+                  Este proyecto está licenciado bajo <strong>GNU AGPL v3</strong>
+                </p>
+                <p className="text-secondary/60 text-xs">
+                  Software libre y de código abierto. Cualquier uso o modificación debe mantener esta licencia y compartir el código fuente.
+                </p>
+              </div>
             </div>
           </div>
         </div>

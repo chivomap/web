@@ -3,6 +3,12 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
+  "license": "AGPL-3.0-or-later",
+  "author": "Eliseo Arévalo",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chivomap/web"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
