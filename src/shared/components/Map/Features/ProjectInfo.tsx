@@ -50,7 +50,28 @@ export const ProjectInfo: React.FC = () => {
               {/* Developer */}
               <div>
                 <h3 className="font-semibold text-secondary mb-2">Desarrollado por</h3>
-                <p className="text-secondary/80">Eliseo Arévalo</p>
+                <a 
+                  href="https://eliseo-arevalo.github.io/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-cyan-400 hover:text-cyan-300 transition-colors underline"
+                >
+                  Eliseo Arévalo
+                </a>
+              </div>
+
+              {/* Organization */}
+              <div>
+                <h3 className="font-semibold text-secondary mb-2">Colaborar en el proyecto</h3>
+                <a 
+                  href="https://github.com/chivomap" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-cyan-400 hover:text-cyan-300 transition-colors underline flex items-center gap-1"
+                >
+                  <span>github.com/chivomap</span>
+                  <span className="text-xs">↗</span>
+                </a>
               </div>
 
               {/* Technologies */}
