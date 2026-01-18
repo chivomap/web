@@ -16,6 +16,8 @@ export const MapLibreMap: React.FC = () => {
   const [clickPosition, setClickPosition] = useState<LngLat | null>(null);
   const [polygonCoords, setPolygonCoords] = useState<LngLat[]>([]);
   const [hoverInfo, setHoverInfo] = useState<{ name: string; x: number; y: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; lngLat: LngLat } | null>(null);
+  const [isDrawingMode, setIsDrawingMode] = useState(false);
   const { config, updateConfig } = useMapStore();
   const { addAnnotation } = useAnnotationStore();
   const { currentMapStyle, setMapStyle } = useThemeStore();
@@ -52,24 +54,33 @@ export const MapLibreMap: React.FC = () => {
 
   const handleMapRightClick = useCallback((event: any) => {
     event.preventDefault();
-    const { lngLat } = event;
-    setPolygonCoords((prevCoords) => [...prevCoords, lngLat]);
-  }, []);
+    const { lngLat, point } = event;
+    
+    if (isDrawingMode) {
+      setPolygonCoords((prevCoords) => [...prevCoords, lngLat]);
+    } else {
+      setContextMenu({ x: point.x, y: point.y, lngLat });
+    }
+  }, [isDrawingMode]);
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (event.key === 'Backspace' || event.key === 'Delete') {
+    if (event.key === 'Escape') {
+      setIsDrawingMode(false);
+      setPolygonCoords([]);
+      setContextMenu(null);
+    } else if (event.key === 'Backspace' || event.key === 'Delete') {
       setClickPosition(null);
       setPolygonCoords([]);
     } else if (event.ctrlKey && event.key === 'z') {
       setPolygonCoords((prevCoords) => prevCoords.slice(0, -1));
     } else if (event.key === 'Enter' && polygonCoords.length >= 3) {
-      // Guardar polígono en anotaciones
       addAnnotation({
         type: 'drawn-polygon',
         name: `Polígono ${new Date().toLocaleTimeString('es-SV')}`,
         data: { coordinates: polygonCoords },
       });
       setPolygonCoords([]);
+      setIsDrawingMode(false);
     }
   }, [polygonCoords, addAnnotation]);
 
@@ -186,6 +197,67 @@ export const MapLibreMap: React.FC = () => {
         )}
       </Map>
       
+      {/* Menú contextual */}
+      {contextMenu && (
+        <>
+          <div 
+            className="fixed inset-0 z-[70]" 
+            onClick={() => setContextMenu(null)}
+          />
+          <div
+            className="fixed z-[71] bg-primary/95 backdrop-blur-sm text-white rounded-lg shadow-xl border border-white/20 py-1 min-w-[200px]"
+            style={{
+              left: contextMenu.x,
+              top: contextMenu.y
+            }}
+          >
+            <button
+              onClick={() => {
+                addAnnotation({
+                  type: 'pin',
+                  name: `Pin ${new Date().toLocaleTimeString('es-SV')}`,
+                  data: { coordinates: contextMenu.lngLat },
+                });
+                setContextMenu(null);
+              }}
+              className="w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-2"
+            >
+              📍 Agregar pin aquí
+            </button>
+            <button
+              onClick={() => {
+                updateConfig({ ...config, center: { lng: contextMenu.lngLat.lng, lat: contextMenu.lngLat.lat } });
+                setContextMenu(null);
+              }}
+              className="w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-2"
+            >
+              🎯 Centrar mapa aquí
+            </button>
+            <button
+              onClick={() => {
+                const coords = `${contextMenu.lngLat.lat.toFixed(6)}, ${contextMenu.lngLat.lng.toFixed(6)}`;
+                navigator.clipboard.writeText(coords);
+                setContextMenu(null);
+              }}
+              className="w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-2"
+            >
+              📋 Copiar coordenadas
+            </button>
+            <div className="border-t border-white/20 my-1" />
+            <button
+              onClick={() => {
+                setIsDrawingMode(true);
+                setPolygonCoords([contextMenu.lngLat]);
+                setContextMenu(null);
+              }}
+              className="w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-2"
+            >
+              ✏️ Empezar dibujo manual
+            </button>
+          </div>
+        </>
+      )}
+      
       {/* Tooltip discreto */}
       {hoverInfo && (
         <div
@@ -196,6 +268,16 @@ export const MapLibreMap: React.FC = () => {
           }}
         >
           {hoverInfo.name}
+        </div>
+      )}
+
+      {/* Indicador de modo dibujo */}
+      {isDrawingMode && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-purple-600/95 backdrop-blur-sm text-white px-4 py-2 rounded-lg shadow-xl border border-purple-400/30">
+          <div className="text-sm font-medium">✏️ Modo dibujo activo</div>
+          <div className="text-xs text-white/80 mt-1">
+            Click derecho: agregar punto • Enter: completar • Escape: cancelar
+          </div>
         </div>
       )}
     </div>
