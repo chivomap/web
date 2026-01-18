@@ -2,7 +2,8 @@ import React from 'react';
 import { useMapStore } from '../../../store/mapStore';
 import { useAnnotationStore } from '../../../store/annotationStore';
 import { useBottomSheetStore } from '../../../store/bottomSheetStore';
-import { BiMap, BiBookmark, BiTrash, BiPin, BiShapePolygon } from 'react-icons/bi';
+import { BiMap, BiBookmark, BiTrash, BiPin, BiShapePolygon, BiDownload } from 'react-icons/bi';
+import { MdOutlinePolyline } from 'react-icons/md';
 
 export const BottomSheet: React.FC = () => {
   const { selectedInfo, currentLevel, parentInfo, setCurrentLevel, setParentInfo, setDepartamentoGeojson } = useMapStore();
@@ -194,9 +195,9 @@ export const BottomSheet: React.FC = () => {
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-start gap-2 flex-1">
                           <div className="mt-1">
-                            {annotation.type === 'pin' && <BiPin className="text-red-500" />}
-                            {annotation.type === 'drawn-polygon' && <BiShapePolygon className="text-blue-500" />}
-                            {annotation.type === 'search-result' && <BiMap className="text-green-500" />}
+                            {annotation.type === 'pin' && <BiPin className="text-red-400 text-lg" />}
+                            {annotation.type === 'drawn-polygon' && <MdOutlinePolyline className="text-purple-400 text-lg" />}
+                            {annotation.type === 'search-result' && <BiShapePolygon className="text-cyan-400 text-lg" />}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-white text-sm font-medium truncate">{annotation.name}</p>
@@ -208,12 +209,46 @@ export const BottomSheet: React.FC = () => {
                             </p>
                           </div>
                         </div>
-                        <button
-                          onClick={() => removeAnnotation(annotation.id)}
-                          className="p-1 hover:bg-white/10 rounded text-red-400"
-                        >
-                          <BiTrash />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          {annotation.type === 'drawn-polygon' && (
+                            <button
+                              onClick={() => {
+                                const coords = Array.isArray(annotation.data.coordinates) 
+                                  ? annotation.data.coordinates 
+                                  : [annotation.data.coordinates];
+                                const geojson = {
+                                  type: 'FeatureCollection',
+                                  features: [{
+                                    type: 'Feature',
+                                    properties: { name: annotation.name },
+                                    geometry: {
+                                      type: 'Polygon',
+                                      coordinates: [coords.map((c: any) => [c.lng, c.lat])]
+                                    }
+                                  }]
+                                };
+                                const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: 'application/json' });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `${annotation.name.replace(/\s+/g, '_')}.geojson`;
+                                a.click();
+                                URL.revokeObjectURL(url);
+                              }}
+                              className="p-1.5 hover:bg-white/10 rounded text-green-400"
+                              title="Exportar GeoJSON"
+                            >
+                              <BiDownload />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => removeAnnotation(annotation.id)}
+                            className="p-1.5 hover:bg-white/10 rounded text-red-400"
+                            title="Eliminar"
+                          >
+                            <BiTrash />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))

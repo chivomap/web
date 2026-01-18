@@ -62,8 +62,16 @@ export const MapLibreMap: React.FC = () => {
       setPolygonCoords([]);
     } else if (event.ctrlKey && event.key === 'z') {
       setPolygonCoords((prevCoords) => prevCoords.slice(0, -1));
+    } else if (event.key === 'Enter' && polygonCoords.length >= 3) {
+      // Guardar polígono en anotaciones
+      addAnnotation({
+        type: 'drawn-polygon',
+        name: `Polígono ${new Date().toLocaleTimeString('es-SV')}`,
+        data: { coordinates: polygonCoords },
+      });
+      setPolygonCoords([]);
     }
-  }, []);
+  }, [polygonCoords, addAnnotation]);
 
   React.useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
