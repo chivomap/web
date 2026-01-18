@@ -6,4 +6,6 @@ export { MapStyleSelector } from './MapStyleSelector';
 export { MapScale } from './MapScale';
 export { MapLegend } from './MapLegend';
 export { NavigationBreadcrumb } from './NavigationBreadcrumb';
+export { AnnotationsPanel } from './AnnotationsPanel';
+export { BottomSheet } from './BottomSheet';
 export { ProjectInfo } from './ProjectInfo';

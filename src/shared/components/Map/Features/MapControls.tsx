@@ -1,10 +1,12 @@
 import React from 'react';
 import { useMap } from 'react-map-gl/maplibre';
-import { BiPlus, BiMinus, BiFullscreen, BiExitFullscreen } from 'react-icons/bi';
+import { BiPlus, BiMinus, BiFullscreen, BiExitFullscreen, BiMap } from 'react-icons/bi';
+import { useAnnotationStore } from '../../../store/annotationStore';
 
 export const MapControls: React.FC = () => {
   const { current: map } = useMap();
   const [isFullscreen, setIsFullscreen] = React.useState(false);
+  const { annotations } = useAnnotationStore();
 
   const zoomIn = () => {
     if (map) map.zoomIn();
@@ -63,6 +65,23 @@ export const MapControls: React.FC = () => {
           <BiExitFullscreen className="text-secondary text-lg sm:text-xl mx-auto" />
         ) : (
           <BiFullscreen className="text-secondary text-lg sm:text-xl mx-auto" />
+        )}
+      </button>
+
+      {/* Annotations Button */}
+      <button
+        onClick={() => {
+          const event = new CustomEvent('toggle-annotations');
+          window.dispatchEvent(event);
+        }}
+        className="relative w-8 h-8 sm:w-10 sm:h-10 bg-primary shadow-lg rounded-lg hover:bg-primary/80 transition-colors touch-manipulation"
+        title="Anotaciones"
+      >
+        <BiMap className="text-secondary text-lg sm:text-xl mx-auto" />
+        {annotations.length > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+            {annotations.length}
+          </span>
         )}
       </button>
     </div>

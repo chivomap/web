@@ -7,6 +7,9 @@ import type { LayerProps } from 'react-map-gl/maplibre';
 export const GeoDistritos: React.FC = () => {
   const { geojson, selectedInfo, currentLevel, parentInfo, setCurrentLevel, setParentInfo, previousGeojson, setPreviousGeojson, departamentoGeojson, setDepartamentoGeojson } = useMapStore();
   const [clickInfo, setClickInfo] = useState<any>(null);
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [sheetState, setSheetState] = useState<'peek' | 'half' | 'full'>('peek');
 
   // Guardar GeoJSON del departamento cuando se carga por primera vez
   useEffect(() => {
@@ -14,6 +17,62 @@ export const GeoDistritos: React.FC = () => {
       setDepartamentoGeojson(geojson);
     }
   }, [geojson, currentLevel, departamentoGeojson]);
+
+  // Handlers para bottom sheet
+  const handleTouchStart = () => {
+    setIsDragging(true);
+    setDragY(0);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    const touch = e.touches[0];
+    const startY = touch.clientY;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - startY;
+    setDragY(diff);
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    
+    // Determinar nuevo estado basado en el drag
+    if (dragY > 100) {
+      // Drag hacia abajo
+      if (sheetState === 'full') {
+        setSheetState('half');
+      } else if (sheetState === 'half') {
+        setSheetState('peek');
+      } else {
+        // Cerrar desde peek
+        setClickInfo(null);
+        useMapStore.getState().setSelectedInfo(null);
+        useMapStore.getState().updateGeojson(null);
+        setCurrentLevel('departamento');
+        setParentInfo(null);
+        setPreviousGeojson(null);
+        setDepartamentoGeojson(null);
+      }
+    } else if (dragY < -100) {
+      // Drag hacia arriba
+      if (sheetState === 'peek') {
+        setSheetState('half');
+      } else if (sheetState === 'half') {
+        setSheetState('full');
+      }
+    }
+    
+    setDragY(0);
+  };
+
+  const getSheetHeight = () => {
+    switch (sheetState) {
+      case 'peek': return '140px';
+      case 'half': return '50dvh';
+      case 'full': return '90dvh';
+      default: return '140px';
+    }
+  };
 
   // Listen for distrito clicks
   useEffect(() => {
@@ -214,13 +273,45 @@ export const GeoDistritos: React.FC = () => {
 
       {/* Info Panel with Legend */}
       {(selectedInfo || clickInfo) && (
-        <div className="absolute top-20 left-4 w-80 sm:top-24 sm:left-4 z-20 
-                        animate-in slide-in-from-left-4 duration-300">
-          <div className="bg-primary/95 backdrop-blur-sm text-white rounded-xl shadow-xl 
-                          border border-white/20 overflow-hidden">
-            
-            {/* Header */}
-            <div className="p-4 border-b border-white/20">
+        <>
+          {/* Backdrop - solo visible cuando no está en peek */}
+          {sheetState !== 'peek' && (
+            <div
+              className="sm:hidden fixed inset-0 bg-black/40 z-[59] transition-opacity"
+              onClick={() => setSheetState('peek')}
+            />
+          )}
+          
+          <div 
+            className="fixed inset-x-0 bottom-0 sm:absolute sm:top-20 sm:bottom-auto sm:left-4 sm:right-auto w-full sm:w-80 z-[60] sm:h-auto"
+            style={{
+              height: getSheetHeight(),
+              transform: `translateY(${Math.max(0, dragY)}px)`,
+              transition: isDragging ? 'none' : 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            <div className="bg-primary/95 backdrop-blur-sm text-white rounded-t-2xl sm:rounded-xl shadow-xl 
+                            border-t sm:border border-white/20 h-full flex flex-col">
+              
+              {/* Handle para drag */}
+              <div 
+                className="sm:hidden w-10 h-1 bg-white/40 rounded-full mx-auto mt-3 mb-2 flex-shrink-0 cursor-pointer"
+                onClick={() => {
+                  if (sheetState === 'peek') setSheetState('half');
+                  else if (sheetState === 'half') setSheetState('full');
+                }}
+              />
+              
+              {/* Header */}
+            <div 
+              className="px-4 py-3 border-b border-white/20 flex-shrink-0 cursor-pointer sm:cursor-default"
+              onClick={() => {
+                if (sheetState === 'peek') setSheetState('half');
+              }}
+            >
               <div className="flex justify-between items-center">
                 <div>
                   <h3 className="font-bold text-lg text-white">
@@ -253,8 +344,8 @@ export const GeoDistritos: React.FC = () => {
               </div>
             </div>
 
-            {/* Content */}
-            <div className="p-4 space-y-3">
+            {/* Content - scrolleable */}
+            <div className="p-4 space-y-3 overflow-y-auto flex-1">
               {/* Back button from municipio to departamento */}
               {parentInfo && !clickInfo && (
                 <button
@@ -389,8 +480,9 @@ export const GeoDistritos: React.FC = () => {
                 </div>
               )}
             </div>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </>
   );

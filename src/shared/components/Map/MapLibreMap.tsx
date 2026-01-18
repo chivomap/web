@@ -2,11 +2,12 @@ import React, { useState, useCallback, useEffect } from 'react';
 import Map, { ViewStateChangeEvent } from 'react-map-gl/maplibre';
 import { LngLat } from 'maplibre-gl';
 import { useMapStore } from '../../../shared/store/mapStore';
+import { useAnnotationStore } from '../../store/annotationStore';
 import { env } from '../../config/env';
 import { MapStyle } from '../../data/mapStyles';
 import { useThemeStore } from '../../store/themeStore';
 
-import { MapControls, MapMarker, PolygonDisplay, GeoDistritos, MapStyleSelector, MapScale } from './Features';
+import { MapControls, MapMarker, PolygonDisplay, GeoDistritos, MapStyleSelector, MapScale, BottomSheet } from './Features';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './popup-styles.css';
 
@@ -18,6 +19,7 @@ export const MapLibreMap: React.FC = () => {
   const [polygonCoords, setPolygonCoords] = useState<LngLat[]>([]);
   const [hoverInfo, setHoverInfo] = useState<{ name: string; x: number; y: number } | null>(null);
   const { config, updateConfig, updatePolygon } = useMapStore();
+  const { addAnnotation } = useAnnotationStore();
   const { currentMapStyle, setMapStyle } = useThemeStore();
   const { center, zoom } = config;
 
@@ -44,7 +46,13 @@ export const MapLibreMap: React.FC = () => {
   const handleMapClick = useCallback((event: any) => {
     const { lngLat } = event;
     setClickPosition(lngLat);
-  }, []);
+    // Agregar pin a anotaciones
+    addAnnotation({
+      type: 'pin',
+      name: `Pin ${new Date().toLocaleTimeString('es-SV')}`,
+      data: { coordinates: lngLat },
+    });
+  }, [addAnnotation]);
 
   const handleMapRightClick = useCallback((event: any) => {
     event.preventDefault();
@@ -69,6 +77,12 @@ export const MapLibreMap: React.FC = () => {
   }, [handleKeyDown]);
 
   const handleExport = () => {
+    // Guardar polígono en anotaciones
+    addAnnotation({
+      type: 'drawn-polygon',
+      name: `Polígono ${new Date().toLocaleTimeString('es-SV')}`,
+      data: { coordinates: polygonCoords },
+    });
     updatePolygon(polygonCoords);
     navigate('/export');
   };
@@ -189,6 +203,9 @@ export const MapLibreMap: React.FC = () => {
           {hoverInfo.name}
         </div>
       )}
+      
+      {/* Panel de anotaciones */}
+      <BottomSheet />
     </div>
   );
 };

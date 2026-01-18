@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { BiSearchAlt as SearchIcon, BiX as ClearIcon } from "react-icons/bi";
 import { getGeoData, GeoDataSearch } from "../../shared/services/GetGeoData";
 import { useMapStore } from '../../shared/store/mapStore';
+import { useAnnotationStore } from '../../shared/store/annotationStore';
 import { getQueryData } from '../../shared/services/GetQueryData';
 import { TextCarousel } from './TextCarrusel';
 import { useLayoutStore } from '../../shared/store/layoutStore';
@@ -18,6 +19,7 @@ export const Search: React.FC = () => {
   const { layoutStates } = useLayoutStore();
   const { search, department } = layoutStates;
   const { updateGeojson, setSelectedInfo, setCurrentLevel, setParentInfo, selectedInfo } = useMapStore();
+  const { addAnnotation } = useAnnotationStore();
   const { showError, setLoading } = useErrorStore();
 
   useEffect(() => {
@@ -80,6 +82,19 @@ export const Search: React.FC = () => {
           name: query
         });
         setInputValue(query);
+        
+        // Guardar búsqueda en anotaciones
+        addAnnotation({
+          type: 'search-result',
+          name: query,
+          data: {
+            geojson: data,
+            metadata: {
+              searchType: whatIs as 'D' | 'M' | 'distrito',
+              searchQuery: query,
+            },
+          },
+        });
         
         if (whatIs === 'D') {
           setCurrentLevel('departamento');
