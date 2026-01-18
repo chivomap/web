@@ -15,6 +15,8 @@ export const BottomSheet: React.FC = () => {
 
   const isOpen = !!(selectedInfo || annotations.length > 0);
 
+  const [dragStartY, setDragStartY] = React.useState(0);
+
   const getSheetHeight = () => {
     if (window.innerWidth >= 640) return 'auto'; // Desktop: altura automática
     switch (sheetState) {
@@ -25,16 +27,22 @@ export const BottomSheet: React.FC = () => {
     }
   };
 
-  const handleTouchStart = () => {
+  const handleTouchStart = (e: React.TouchEvent) => {
     setIsDragging(true);
+    setDragStartY(e.touches[0].clientY);
     setDragY(0);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
-    const touch = e.touches[0];
-    const diff = e.touches[0].clientY - touch.clientY;
-    setDragY(diff);
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - dragStartY;
+    // Solo permitir drag hacia abajo desde full/half, o hacia arriba desde peek/half
+    if ((sheetState === 'full' && diff > 0) || 
+        (sheetState === 'half' && diff !== 0) || 
+        (sheetState === 'peek' && diff < 0)) {
+      setDragY(diff);
+    }
   };
 
   const handleTouchEnd = () => {
@@ -50,6 +58,7 @@ export const BottomSheet: React.FC = () => {
     }
     
     setDragY(0);
+    setDragStartY(0);
   };
 
   const handleClose = () => {
@@ -80,20 +89,22 @@ export const BottomSheet: React.FC = () => {
           transform: `translateY(${Math.max(0, dragY)}px)`,
           transition: isDragging ? 'none' : 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
       >
         <div className="bg-primary/95 backdrop-blur-sm text-white rounded-t-2xl sm:rounded-xl shadow-xl border-t sm:border border-white/20 h-full flex flex-col">
           
-          {/* Handle */}
+          {/* Handle - área arrastrable */}
           <div 
-            className="sm:hidden w-10 h-1 bg-white/40 rounded-full mx-auto mt-3 mb-2 flex-shrink-0"
+            className="sm:hidden w-full flex justify-center pt-3 pb-2 flex-shrink-0 cursor-grab active:cursor-grabbing"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
             onClick={() => {
               if (sheetState === 'peek') setSheetState('half');
               else if (sheetState === 'half') setSheetState('full');
             }}
-          />
+          >
+            <div className="w-10 h-1 bg-white/40 rounded-full" />
+          </div>
           
           {/* Tabs */}
           <div className="flex border-b border-white/20 flex-shrink-0">
