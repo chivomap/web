@@ -1,15 +1,19 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { BiSearchAlt as SearchIcon, BiX as ClearIcon } from "react-icons/bi";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { BiSearchAlt as SearchIcon, BiX as ClearIcon, BiBus, BiMap, BiChevronDown, BiLoaderAlt } from "react-icons/bi";
+import { FaBus } from "react-icons/fa";
 import Fuse from 'fuse.js';
 import { getGeoData, GeoDataSearch } from "../../shared/services/GetGeoData";
 import { useMapStore } from '../../shared/store/mapStore';
 import { useAnnotationStore } from '../../shared/store/annotationStore';
 import { getQueryData } from '../../shared/services/GetQueryData';
+import { useRutasStore } from '../../shared/store/rutasStore';
 import { TextCarousel } from './TextCarrusel';
 import { useLayoutStore } from '../../shared/store/layoutStore';
 import { useErrorStore } from '../../shared/store/errorStore';
 import { errorHandler } from '../../shared/errors/ErrorHandler';
 import { Z_INDEX } from '../../shared/constants/zIndex';
+
+type SearchMode = 'routes' | 'places';
 
 export const Search: React.FC = () => {
   const [geoData, setGeoData] = useState<GeoDataSearch>({
@@ -19,45 +23,77 @@ export const Search: React.FC = () => {
   });
   const [inputValue, setInputValue] = useState<string>('');
   const [showResults, setShowResults] = useState<boolean>(false);
+  const [mode, setMode] = useState<SearchMode>('routes');
+  const [showModeSelector, setShowModeSelector] = useState<boolean>(false);
+
+  const searchContainerRef = useRef<HTMLFormElement>(null);
+
   const { layoutStates } = useLayoutStore();
   const { search, department } = layoutStates;
   const { updateGeojson, setSelectedInfo, setCurrentLevel, setParentInfo, selectedInfo } = useMapStore();
+
+  const { selectRoute, allRoutes, fetchAllRoutes, isLoading: isRutasLoading, clearSelectedRoute } = useRutasStore();
+
   const { addAnnotation } = useAnnotationStore();
   const { showError, setLoading } = useErrorStore();
 
   useEffect(() => {
-    const setCookie = () => {
-      try {
-        document.cookie = 'hasVisited=true; path=/; max-age=31536000; SameSite=Strict';
-      } catch (error) {
-        console.warn('Could not set cookie:', error);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowResults(false);
+        setShowModeSelector(false);
       }
     };
 
-    setCookie();
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
+  useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
         const data = await getGeoData();
         setGeoData(data.data);
       } catch (error) {
-        const handledError = errorHandler.handle(error);
-        showError(handledError);
-      } finally {
-        setLoading(false);
+        console.error("Error loading geo data", error);
       }
     };
-
     fetchData();
-  }, [setLoading, showError]);
+
+    try {
+      document.cookie = 'hasVisited=true; path=/; max-age=31536000; SameSite=Strict';
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    if (mode === 'routes' && allRoutes.length === 0) {
+      fetchAllRoutes();
+    }
+  }, [mode, allRoutes.length, fetchAllRoutes]);
+
+  // Limpiar todo al cambiar de modo
+  useEffect(() => {
+    setInputValue('');
+    setShowResults(false);
+    
+    // Limpiar estado del mapa (lugares)
+    updateGeojson(null);
+    setSelectedInfo(null);
+    setCurrentLevel('departamento');
+    setParentInfo(null);
+    
+    // Limpiar ruta seleccionada
+    clearSelectedRoute();
+  }, [mode, updateGeojson, setSelectedInfo, setCurrentLevel, setParentInfo, clearSelectedRoute]);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.value;
     setInputValue(newValue);
     setShowResults(true);
-    
-    // Si hay algo seleccionado y el usuario escribe algo diferente, limpiar
+    setShowModeSelector(false); // Ocultar selector de modo al escribir
+
     if (selectedInfo && newValue !== selectedInfo.name) {
       updateGeojson(null);
       setSelectedInfo(null);
@@ -68,20 +104,31 @@ export const Search: React.FC = () => {
 
   const handleClearInput = () => {
     setInputValue('');
-    setShowResults(false);
+    if (inputValue) setShowResults(false);
+
     updateGeojson(null);
     setSelectedInfo(null);
     setCurrentLevel('departamento');
     setParentInfo(null);
   }
 
-  const handleClick = async (query: string, whatIs: string) => {
+  const handleClick = async (query: string, whatIs: string, routeCode?: string) => {
     try {
-      // Ocultar lista inmediatamente y mostrar loading
       setInputValue(query);
       setShowResults(false);
+
+      if (whatIs === 'ROUTE' && routeCode) {
+        updateGeojson(null);
+        setSelectedInfo(null);
+        setCurrentLevel('departamento');
+        setParentInfo(null);
+
+        await selectRoute(routeCode);
+        return;
+      }
+
       setLoading(true);
-      
+
       const data = await getQueryData(query, whatIs);
       if (data) {
         updateGeojson(data);
@@ -89,8 +136,7 @@ export const Search: React.FC = () => {
           type: whatIs === 'D' ? 'Departamento' : whatIs === 'M' ? 'Municipio' : 'Distrito',
           name: query
         });
-        
-        // Guardar búsqueda en anotaciones
+
         addAnnotation({
           type: 'search-result',
           name: query,
@@ -102,7 +148,7 @@ export const Search: React.FC = () => {
             },
           },
         });
-        
+
         if (whatIs === 'D') {
           setCurrentLevel('departamento');
           setParentInfo(null);
@@ -119,11 +165,10 @@ export const Search: React.FC = () => {
       const handledError = errorHandler.handle(error);
       showError(handledError);
     } finally {
-      setLoading(false);
+      if (whatIs !== 'ROUTE') setLoading(false);
     }
   };
 
-  // Sincronizar input con selectedInfo
   useEffect(() => {
     if (selectedInfo) {
       setInputValue(selectedInfo.name);
@@ -132,162 +177,292 @@ export const Search: React.FC = () => {
     }
   }, [selectedInfo]);
 
-  // Configurar Fuse.js para búsqueda inteligente
-  const fuseOptions = {
-    threshold: 0.3, // 0 = exacto, 1 = cualquier cosa
+  // --- Search Logic Local (Fuse.js) ---
+
+  const fuseOptions = useMemo(() => ({
+    threshold: 0.3,
     keys: ['name']
-  };
+  }), []);
 
-  const fuseDepartamentos = useMemo(() => 
+  const fuseDepartamentos = useMemo(() =>
     new Fuse(geoData.departamentos.map(d => ({ name: d })), fuseOptions),
-    [geoData.departamentos]
+    [geoData.departamentos, fuseOptions]
   );
-
-  const fuseMunicipios = useMemo(() => 
+  const fuseMunicipios = useMemo(() =>
     new Fuse(geoData.municipios.map(m => ({ name: m })), fuseOptions),
-    [geoData.municipios]
+    [geoData.municipios, fuseOptions]
   );
-
-  const fuseDistritos = useMemo(() => 
+  const fuseDistritos = useMemo(() =>
     new Fuse(geoData.distritos.map(d => ({ name: d })), fuseOptions),
-    [geoData.distritos]
+    [geoData.distritos, fuseOptions]
   );
 
-  // Búsqueda inteligente con límite de resultados
+  // Rutas Fuse Optimizado para encontrar "3", "33", "33-A"
+  const fuseRoutes = useMemo(() =>
+    new Fuse(allRoutes, {
+      threshold: 0.2, // Más estricto para que matches parciales tengan sentido y no traiga basura
+      useExtendedSearch: true, // Permitir operadores avanzados si se requieren, pero mejora fuzzy simple también
+      ignoreLocation: true, // Buscar en todo el string, no solo al inicio
+      keys: ['nombre', 'codigo']
+    }),
+    [allRoutes]
+  );
+
   const LIMIT = 5;
-  
-  const filteredDepartamentos = inputValue 
+
+  const filteredDepartamentos = (mode === 'places' && inputValue)
     ? fuseDepartamentos.search(inputValue).slice(0, LIMIT).map(r => r.item.name)
     : [];
-  
-  const filteredMunicipios = inputValue 
+
+  const filteredMunicipios = (mode === 'places' && inputValue)
     ? fuseMunicipios.search(inputValue).slice(0, LIMIT).map(r => r.item.name)
     : [];
-  
-  const filteredDistritos = inputValue 
+
+  const filteredDistritos = (mode === 'places' && inputValue)
     ? fuseDistritos.search(inputValue).slice(0, LIMIT).map(r => r.item.name)
     : [];
 
-  const totalDepartamentos = inputValue ? fuseDepartamentos.search(inputValue).length : 0;
-  const totalMunicipios = inputValue ? fuseMunicipios.search(inputValue).length : 0;
-  const totalDistritos = inputValue ? fuseDistritos.search(inputValue).length : 0;
+  const filteredRoutes = (mode === 'routes' && inputValue)
+    ? fuseRoutes.search(inputValue).slice(0, 20).map(r => r.item)
+    : [];
 
-  const hasResults = filteredDepartamentos.length > 0 || filteredMunicipios.length > 0 || filteredDistritos.length > 0;
+  const hasResults = filteredDepartamentos.length > 0 ||
+    filteredMunicipios.length > 0 ||
+    filteredDistritos.length > 0 ||
+    (mode === 'routes' && filteredRoutes.length > 0);
+
+  const isSelfLoading = mode === 'routes' && isRutasLoading && allRoutes.length === 0;
 
   return (
     <>
-      {/* Backdrop - solo cuando hay resultados visibles */}
-      {inputValue && !selectedInfo && hasResults && showResults && (
-        <div 
+      {showResults && inputValue && (
+        <div
           className="fixed inset-0 bg-black/40"
           style={{ zIndex: Z_INDEX.SEARCH_BACKDROP }}
-          onClick={handleClearInput}
+          onClick={() => setShowResults(false)}
         />
       )}
 
-      <form 
-        className="absolute w-full h-min justify-center items-center top-0 left-0 rounded out-top"
+      <form
+        ref={searchContainerRef}
+        onSubmit={(e) => e.preventDefault()}
+        className="absolute w-full h-min flex flex-col items-center top-0 left-0"
         style={{ zIndex: Z_INDEX.SEARCH_INPUT }}
       >
         {search && (
-          <div className="flex w-[90%] mx-auto relative">
-            <SearchIcon className="text-secondary text-2xl absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <div className="w-full flex items-center justify-center">
-              <input
-                onChange={handleInputChange}
-                onFocus={() => setShowResults(true)}
-                onBlur={() => setTimeout(() => setShowResults(false), 200)}
-                value={inputValue}
-                type="text"
-                placeholder="Busca distritos, municipios, departamentos"
-              className="relative w-full h-12 px-4 pl-12 text-sm bg-primary placeholder-gray-400 text-secondary rounded-lg border-none outline-none"
-            />
+          <div className="w-[90%] max-w-lg relative flex flex-col gap-2">
 
-            {inputValue && (
-              <ClearIcon
-                className="text-secondary text-2xl absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer hover:text-secondary/70 transition-colors"
-                onClick={handleClearInput}
-              />
+            <div className="relative w-full group">
+              <div className={`
+                absolute inset-0 bg-secondary/20 rounded-xl blur transition-opacity duration-300
+                ${showResults ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}
+              `} />
+
+              <div className="relative flex items-center bg-primary/95 backdrop-blur-md rounded-xl border border-white/10 shadow-2xl overflow-visible pointer-events-auto">
+
+                <div className="relative border-r border-white/10 pr-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowModeSelector(!showModeSelector);
+                      setShowResults(false); // Ocultar resultados al abrir selector
+                    }}
+                    className="flex items-center gap-1 pl-3 pr-2 py-3 text-secondary hover:text-white transition-colors outline-none"
+                    title="Cambiar modo de búsqueda"
+                  >
+                    {mode === 'routes' ? <BiBus className="text-xl" /> : <BiMap className="text-xl" />}
+                    <BiChevronDown className={`text-xs opacity-70 transition-transform ${showModeSelector ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {showModeSelector && (
+                    <div 
+                      className="absolute top-full left-0 mt-2 w-32 bg-primary/95 backdrop-blur-md border border-white/10 rounded-lg shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+                      style={{ zIndex: Z_INDEX.SEARCH_RESULTS }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => { setMode('routes'); setShowModeSelector(false); }}
+                        className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:bg-white/10 transition-colors ${mode === 'routes' ? 'text-secondary bg-white/5' : 'text-white'}`}
+                      >
+                        <BiBus /> Rutas
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setMode('places'); setShowModeSelector(false); }}
+                        className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:bg-white/10 transition-colors ${mode === 'places' ? 'text-secondary bg-white/5' : 'text-white'}`}
+                      >
+                        <BiMap /> Lugares
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <input
+                  onChange={handleInputChange}
+                  onFocus={() => setShowResults(true)}
+                  value={inputValue}
+                  type="text"
+                  placeholder={mode === 'routes' ? "Buscar ruta (ej: 42, 101, Especial)" : "Buscar municipio, departamento..."}
+                  className="w-full h-12 px-3 text-white bg-transparent outline-none placeholder-white/30"
+                  autoComplete="off"
+                />
+
+                {inputValue ? (
+                  <button
+                    type="button"
+                    onClick={handleClearInput}
+                    className="mr-2 p-2 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-colors"
+                  >
+                    {isSelfLoading ? <BiLoaderAlt className="text-xl animate-spin text-secondary" /> : <ClearIcon className="text-xl" />}
+                  </button>
+                ) : (
+                  <SearchIcon className="mr-4 text-xl text-white/20 pointer-events-none" />
+                )}
+              </div>
+            </div>
+
+            {inputValue && showResults && (
+              <div
+                className="
+                  absolute top-full mt-2 w-full left-0 
+                  bg-primary/95 backdrop-blur-md 
+                  rounded-xl border border-white/10 shadow-2xl 
+                  overflow-hidden max-h-[60vh] overflow-y-auto
+                  animate-slide-up pointer-events-auto
+                "
+              >
+                {mode === 'routes' && (
+                  <>
+                    {filteredRoutes.length > 0 ? (
+                      <div>
+                        <div className="px-4 py-2 text-xs font-semibold text-white/40 uppercase tracking-wider bg-white/5">
+                          Resultados encontrados ({filteredRoutes.length})
+                        </div>
+                        {filteredRoutes.map((ruta) => (
+                          <div
+                            key={ruta.codigo}
+                            onClick={() => handleClick(ruta.nombre, 'ROUTE', ruta.codigo)}
+                            className="
+                              group px-4 py-3 cursor-pointer 
+                              border-b border-white/5 last:border-0
+                              hover:bg-white/5 transition-colors
+                            "
+                          >
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center gap-3">
+                                {/* Icono de Ruta Mejorado */}
+                                <div className="
+                                  min-w-[2rem] h-8 px-2 rounded-lg bg-secondary/20 text-secondary 
+                                  flex items-center justify-center font-bold text-xs
+                                  group-hover:scale-110 transition-transform whitespace-nowrap
+                                ">
+                                  {ruta.nombre.replace('Ruta ', '').split(' ')[0]}
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-white group-hover:text-secondary transition-colors">
+                                    {ruta.nombre}
+                                  </p>
+                                  <p className="text-xs text-white/50">
+                                    {ruta.tipo === 'POR AUTOBUS' ? 'Bus' : 'Micro'} • {ruta.departamento}
+                                  </p>
+                                </div>
+                              </div>
+                              <BiBus className="text-white/20 group-hover:text-secondary" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-8 text-center">
+                        {isSelfLoading ? (
+                          <div className="flex flex-col items-center gap-2">
+                            <BiLoaderAlt className="text-3xl animate-spin text-secondary" />
+                            <p className="text-white/60">Cargando catálogo de rutas...</p>
+                          </div>
+                        ) : (
+                          <>
+                            <FaBus className="mx-auto text-4xl text-white/20 mb-3" />
+                            <p className="text-white/60">No encontramos rutas con ese nombre</p>
+                            <p className="text-xs text-white/40 mt-1">Prueba buscando por número (ej: 42, 101)</p>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {mode === 'places' && (
+                  <>
+                    {hasResults ? (
+                      <div className="divide-y divide-white/5">
+                        {filteredDepartamentos.length > 0 && (
+                          <div>
+                            <p className="px-4 py-2 text-xs font-semibold text-secondary uppercase tracking-wider bg-secondary/10">
+                              Departamentos
+                            </p>
+                            {filteredDepartamentos.map((depto, index) => (
+                              <button
+                                key={index}
+                                onClick={() => handleClick(depto, 'D')}
+                                className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors flex items-center gap-3"
+                              >
+                                <BiMap className="text-white/40" />
+                                <span className="text-white">{depto}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {filteredMunicipios.length > 0 && (
+                          <div>
+                            <p className="px-4 py-2 text-xs font-semibold text-green-400 uppercase tracking-wider bg-green-400/10">
+                              Municipios
+                            </p>
+                            {filteredMunicipios.map((muni, index) => (
+                              <button
+                                key={index}
+                                onClick={() => handleClick(muni, 'M')}
+                                className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors flex items-center gap-3"
+                              >
+                                <BiMap className="text-white/40" />
+                                <span className="text-white">{muni}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {filteredDistritos.length > 0 && (
+                          <div>
+                            <p className="px-4 py-2 text-xs font-semibold text-blue-400 uppercase tracking-wider bg-blue-400/10">
+                              Distritos
+                            </p>
+                            {filteredDistritos.map((dist, index) => (
+                              <button
+                                key={index}
+                                onClick={() => handleClick(dist, 'NAM')}
+                                className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors flex items-center gap-3"
+                              >
+                                <BiMap className="text-white/40" />
+                                <span className="text-white">{dist}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-8 text-center">
+                        <BiMap className="mx-auto text-4xl text-white/20 mb-3" />
+                        <p className="text-white/60">No encontramos lugares cercanos</p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             )}
           </div>
+        )}
 
-          {inputValue && !selectedInfo && showResults && (
-            <section 
-              className="mt-[52px] h-min absolute w-full left-0 rounded-bl rounded-br out-top"
-              style={{ zIndex: Z_INDEX.SEARCH_RESULTS }}
-            >
-              <div className="flex flex-col w-full p-0 text-sm bg-primary placeholder-gray-400 text-white rounded-lg border-none outline-none shadow-lg max-h-[60vh] overflow-y-auto">
-                
-                {/* Departamentos */}
-                {filteredDepartamentos.length > 0 && (
-                  <>
-                    <p className="px-4 py-2 font-bold text-secondary sticky top-0 bg-primary">
-                      Departamentos <span className="text-white/60">
-                        {filteredDepartamentos.length}{totalDepartamentos > LIMIT && ` de ${totalDepartamentos}`}
-                      </span>
-                    </p>
-                    {filteredDepartamentos.map((depto, index) => (
-                      <div key={index} onClick={() => handleClick(depto, 'D')}>
-                        <p className="w-full px-4 py-2 cursor-pointer hover:bg-secondary/10 transition-colors">
-                          {depto ?? 'Sin nombre'}
-                        </p>
-                      </div>
-                    ))}
-                    <div className="h-px bg-gradient-to-r from-transparent via-secondary/20 to-transparent my-2" />
-                  </>
-                )}
-
-                {/* Municipios */}
-                {filteredMunicipios.length > 0 && (
-                  <>
-                    <p className="px-4 py-2 font-bold text-secondary sticky top-0 bg-primary">
-                      Municipios <span className="text-white/60">
-                        {filteredMunicipios.length}{totalMunicipios > LIMIT && ` de ${totalMunicipios}`}
-                      </span>
-                    </p>
-                    {filteredMunicipios.map((muni, index) => (
-                      <div key={index} onClick={() => handleClick(muni, 'M')}>
-                        <p className="w-full px-4 py-2 cursor-pointer hover:bg-secondary/10 transition-colors">
-                          {muni ?? 'Sin nombre'}
-                        </p>
-                      </div>
-                    ))}
-                    <div className="h-px bg-gradient-to-r from-transparent via-secondary/20 to-transparent my-2" />
-                  </>
-                )}
-
-                {/* Distritos */}
-                {filteredDistritos.length > 0 && (
-                  <>
-                    <p className="px-4 py-2 font-bold text-secondary sticky top-0 bg-primary">
-                      Distritos <span className="text-white/60">
-                        {filteredDistritos.length}{totalDistritos > LIMIT && ` de ${totalDistritos}`}
-                      </span>
-                    </p>
-                    {filteredDistritos.map((distrito, index) => (
-                      <div key={index} onClick={() => handleClick(distrito, 'NAM')}>
-                        <p className="w-full px-4 py-2 cursor-pointer hover:bg-secondary/10 transition-colors">
-                          {distrito}
-                        </p>
-                      </div>
-                    ))}
-                  </>
-                )}
-
-                {/* Empty state */}
-                {filteredDepartamentos.length === 0 && filteredMunicipios.length === 0 && filteredDistritos.length === 0 && (
-                  <div className="px-4 py-8 text-center text-white/60">
-                    <p className="text-lg mb-2">🔍 No encontramos resultados</p>
-                    <p className="text-sm">Intenta con otro término de búsqueda</p>
-                  </div>
-                )}
-                </div>
-            </section>
-          )}
-        </div>
-      )}
-
-      {department && <TextCarousel />}
+        {department && <TextCarousel />}
       </form>
     </>
   );

@@ -2,16 +2,19 @@ import { create } from 'zustand';
 import type {
     RutaNearby,
     RutaFeature,
-    RutasMetadataResponse
+    RutasMetadataResponse,
+    RutaMetadata
 } from '../types/rutas';
 import {
     getNearbyRoutes,
     getRouteByCode,
-    getRoutesMetadata
+    getRoutesMetadata,
+    listRoutes
 } from '../services/GetRutasData';
 
 interface RutasState {
     // Data
+    allRoutes: RutaMetadata[];
     nearbyRoutes: RutaNearby[];
     selectedRoute: RutaFeature | null;
     metadata: RutasMetadataResponse | null;
@@ -26,6 +29,7 @@ interface RutasState {
     error: string | null;
 
     // Actions
+    fetchAllRoutes: () => Promise<void>;
     fetchNearbyRoutes: (lat: number, lng: number, radius?: number) => Promise<void>;
     selectRoute: (codigo: string) => Promise<void>;
     clearSelectedRoute: () => void;
@@ -38,6 +42,7 @@ interface RutasState {
 
 export const useRutasStore = create<RutasState>((set, get) => ({
     // Initial state
+    allRoutes: [],
     nearbyRoutes: [],
     selectedRoute: null,
     metadata: null,
@@ -46,6 +51,22 @@ export const useRutasStore = create<RutasState>((set, get) => ({
     isLoading: false,
     isPanelOpen: false,
     error: null,
+
+    fetchAllRoutes: async () => {
+        // Evitar recargar si ya hay datos
+        if (get().allRoutes.length > 0) return;
+
+        set({ isLoading: true });
+        try {
+            // Llamar sin filtros para traer todo
+            const response = await listRoutes();
+            set({ allRoutes: response.results, isLoading: false });
+        } catch {
+            console.error('Error fetching all routes for cache');
+            set({ isLoading: false });
+            // No seteamos error global para no interrumpir otras interacciones
+        }
+    },
 
     fetchNearbyRoutes: async (lat: number, lng: number, radius?: number) => {
         const r = radius ?? get().searchRadius;

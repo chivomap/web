@@ -1,13 +1,15 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import Map, { ViewStateChangeEvent } from 'react-map-gl/maplibre';
-import { LngLat } from 'maplibre-gl';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import Map, { ViewStateChangeEvent, MapRef } from 'react-map-gl/maplibre';
+import { LngLat, LngLatBounds } from 'maplibre-gl';
 import { useMapStore } from '../../../shared/store/mapStore';
 import { useAnnotationStore } from '../../store/annotationStore';
+import { useRutasStore } from '../../store/rutasStore';
 import { env } from '../../config/env';
 import { MapStyle } from '../../data/mapStyles';
 import { useThemeStore } from '../../store/themeStore';
 
 import { MapControls, MapMarker, PolygonDisplay, MapStyleSelector, MapScale, BottomSheet, GeoLayer, GeoDistritos } from './Features';
+import { RouteLayer, NearbyRoutesPanel } from '../rutas';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './popup-styles.css';
 
@@ -20,8 +22,11 @@ export const MapLibreMap: React.FC = () => {
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const { config, updateConfig } = useMapStore();
   const { addAnnotation, annotations } = useAnnotationStore();
+  const { fetchNearbyRoutes, selectedRoute } = useRutasStore();
   const { currentMapStyle, setMapStyle } = useThemeStore();
   const { center, zoom } = config;
+
+  const mapRef = useRef<MapRef>(null);
 
   // Initialize map style from store
   const [mapStyle, setMapStyleState] = useState<string>(currentMapStyle.url);
@@ -29,6 +34,34 @@ export const MapLibreMap: React.FC = () => {
   useEffect(() => {
     setMapStyleState(currentMapStyle.url);
   }, [currentMapStyle]);
+
+  // Zoom to route when selected
+  useEffect(() => {
+    if (selectedRoute && mapRef.current) {
+      try {
+        const bounds = new LngLatBounds();
+        const coords = selectedRoute.geometry.coordinates;
+
+        if (Array.isArray(coords)) {
+          coords.forEach((coord: any) => {
+            // coord expected as [lng, lat] or [lng, lat, elev]
+            if (Array.isArray(coord) && coord.length >= 2) {
+              bounds.extend([coord[0], coord[1]]);
+            }
+          });
+
+          if (!bounds.isEmpty()) {
+            mapRef.current.fitBounds(bounds, {
+              padding: 50,
+              duration: 1000 // Smooth animation
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error fitting bounds to route:", error);
+      }
+    }
+  }, [selectedRoute]);
 
   const handleMapLoad = useCallback(() => {
     setMapReady(true);
@@ -55,7 +88,7 @@ export const MapLibreMap: React.FC = () => {
   const handleMapRightClick = useCallback((event: any) => {
     event.preventDefault();
     const { lngLat, point } = event;
-    
+
     if (isDrawingMode) {
       setPolygonCoords((prevCoords) => [...prevCoords, lngLat]);
     } else {
@@ -99,6 +132,7 @@ export const MapLibreMap: React.FC = () => {
   return (
     <div className="w-screen h-screen fixed top-0 left-0">
       <Map
+        ref={mapRef}
         longitude={center.lng}
         latitude={center.lat}
         zoom={zoom}
@@ -129,7 +163,7 @@ export const MapLibreMap: React.FC = () => {
             const feature = event.features[0];
             if (feature.source === 'distritos-source') {
               event.target.getCanvas().style.cursor = 'pointer';
-              
+
               // Mostrar tooltip
               const name = feature.properties.NAM || feature.properties.M;
               setHoverInfo({
@@ -137,7 +171,7 @@ export const MapLibreMap: React.FC = () => {
                 x: event.point.x,
                 y: event.point.y
               });
-              
+
               if (feature.id !== undefined) {
                 // Limpiar hover anterior
                 event.target.queryRenderedFeatures().forEach((f: any) => {
@@ -168,7 +202,9 @@ export const MapLibreMap: React.FC = () => {
                   );
                 }
               });
-            } catch (e) {}
+            } catch {
+              // ignore
+            }
           }
         }}
         onContextMenu={handleMapRightClick}
@@ -179,8 +215,8 @@ export const MapLibreMap: React.FC = () => {
         interactiveLayerIds={['distritos-fill']}
         attributionControl={false}
       >
-        <MapStyleSelector 
-          onStyleChange={handleStyleChange} 
+        <MapStyleSelector
+          onStyleChange={handleStyleChange}
         />
         <MapControls />
         <MapScale />
@@ -188,6 +224,7 @@ export const MapLibreMap: React.FC = () => {
           <>
             <GeoLayer />
             <GeoDistritos />
+            <RouteLayer />
             <BottomSheet />
             {clickPosition && <MapMarker position={clickPosition} />}
             {/* Renderizar pins de anotaciones */}
@@ -200,12 +237,12 @@ export const MapLibreMap: React.FC = () => {
           </>
         )}
       </Map>
-      
+
       {/* Menú contextual */}
       {contextMenu && (
         <>
-          <div 
-            className="fixed inset-0 z-[70]" 
+          <div
+            className="fixed inset-0 z-[70]"
             onClick={() => setContextMenu(null)}
           />
           <div
@@ -258,10 +295,19 @@ export const MapLibreMap: React.FC = () => {
             >
               ✏️ Empezar dibujo manual
             </button>
+            <button
+              onClick={() => {
+                fetchNearbyRoutes(contextMenu.lngLat.lat, contextMenu.lngLat.lng, 1);
+                setContextMenu(null);
+              }}
+              className="w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-2"
+            >
+              🚌 Buscar rutas cercanas
+            </button>
           </div>
         </>
       )}
-      
+
       {/* Tooltip discreto */}
       {hoverInfo && (
         <div
@@ -284,6 +330,9 @@ export const MapLibreMap: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Transport Routes UI */}
+      <NearbyRoutesPanel />
     </div>
   );
 };
