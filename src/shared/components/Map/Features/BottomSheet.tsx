@@ -4,7 +4,7 @@ import { useAnnotationStore } from '../../../store/annotationStore';
 import { useBottomSheetStore } from '../../../store/bottomSheetStore';
 import { useRutasStore } from '../../../store/rutasStore';
 import { RUTA_COLORS, type SubtipoRuta } from '../../../types/rutas';
-import { BiMap, BiBookmark, BiTrash, BiPin, BiShapePolygon, BiDownload, BiBus, BiRuler, BiRightArrowAlt, BiX } from 'react-icons/bi';
+import { BiMap, BiBookmark, BiTrash, BiPin, BiShapePolygon, BiDownload, BiBus, BiRuler, BiRightArrowAlt, BiX, BiLoaderAlt } from 'react-icons/bi';
 import { MdOutlinePolyline } from 'react-icons/md';
 
 export const BottomSheet: React.FC = () => {
@@ -15,6 +15,7 @@ export const BottomSheet: React.FC = () => {
 
   const [dragY, setDragY] = React.useState(0);
   const [isDragging, setIsDragging] = React.useState(false);
+  const [radiusDebounce, setRadiusDebounce] = React.useState<NodeJS.Timeout | null>(null);
 
   // Está abierto si hay alguna info, ruta seleccionada, o rutas cercanas
   const isOpen = !!(selectedInfo || annotations.length > 0 || selectedRoute || nearbyRoutes.length > 0);
@@ -75,6 +76,9 @@ export const BottomSheet: React.FC = () => {
     // Limpiar ruta y rutas cercanas
     clearSelectedRoute();
     clearNearbyRoutes();
+    
+    // Limpiar timeout si existe
+    if (radiusDebounce) clearTimeout(radiusDebounce);
   };
 
   if (!isOpen) return null;
@@ -159,6 +163,45 @@ export const BottomSheet: React.FC = () => {
                         Limpiar
                       </button>
                     </div>
+
+                    {/* Control de Radio */}
+                    {useRutasStore.getState().searchLocation && (
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-white/60">Radio:</span>
+                        <input
+                          type="range"
+                          min="0.5"
+                          max="5"
+                          step="0.5"
+                          value={useRutasStore.getState().searchRadius}
+                          onChange={(e) => {
+                            const newRadius = parseFloat(e.target.value);
+                            const location = useRutasStore.getState().searchLocation;
+                            
+                            // Actualizar el valor inmediatamente en el store
+                            useRutasStore.getState().setRadius(newRadius);
+                            
+                            // Limpiar timeout anterior
+                            if (radiusDebounce) clearTimeout(radiusDebounce);
+                            
+                            // Hacer la petición después de 500ms
+                            const timeout = setTimeout(() => {
+                              if (location) {
+                                useRutasStore.getState().fetchNearbyRoutes(location.lat, location.lng, newRadius);
+                              }
+                            }, 500);
+                            
+                            setRadiusDebounce(timeout);
+                          }}
+                          className="flex-1 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer slider-thumb"
+                        />
+                        <span className="text-secondary font-semibold min-w-[3rem] text-right flex items-center gap-1">
+                          {useRutasStore.getState().isLoading && <BiLoaderAlt className="animate-spin" />}
+                          {useRutasStore.getState().searchRadius} km
+                        </span>
+                      </div>
+                    )}
+
                     <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-secondary/30 scrollbar-track-white/5 hover:scrollbar-thumb-secondary/50">
                       {nearbyRoutes.map((ruta) => {
                         const subtipo = ruta.subtipo as SubtipoRuta;

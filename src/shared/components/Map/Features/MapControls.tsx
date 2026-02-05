@@ -1,7 +1,7 @@
 import React from 'react';
 import { useMap } from 'react-map-gl/maplibre';
 import { BiPlus, BiMinus, BiFullscreen, BiExitFullscreen, BiCurrentLocation } from 'react-icons/bi';
-import { MdMyLocation, MdNearMe, MdAddLocation, MdContentCopy } from 'react-icons/md';
+import { MdMyLocation, MdNearMe, MdAddLocation, MdContentCopy, MdDirectionsBus } from 'react-icons/md';
 import { useAnnotationStore } from '../../../store/annotationStore';
 import { useRutasStore } from '../../../store/rutasStore';
 import { useMapStore } from '../../../store/mapStore';
@@ -67,6 +67,32 @@ export const MapControls: React.FC = () => {
     }
   };
 
+  // Buscar rutas cercanas directamente
+  const handleNearbyRoutes = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          // Centrar mapa en ubicación con zoom apropiado para 1km
+          updateConfig({ 
+            ...config, 
+            center: { lat: latitude, lng: longitude }, 
+            zoom: 14 // Zoom apropiado para ver ~1km de radio
+          });
+          fetchNearbyRoutes(latitude, longitude, 1);
+          setActiveTab('info');
+          setSheetState('half');
+        },
+        (error) => {
+          console.error('Error obteniendo ubicación:', error);
+          alert('No se pudo obtener tu ubicación. Verifica los permisos del navegador.');
+        }
+      );
+    } else {
+      alert('Tu navegador no soporta geolocalización');
+    }
+  };
+
   // Cerrar menú al hacer clic fuera
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -112,6 +138,15 @@ export const MapControls: React.FC = () => {
         ) : (
           <BiFullscreen className="text-secondary text-xl sm:text-xl mx-auto" />
         )}
+      </button>
+
+      {/* Nearby Routes Button */}
+      <button
+        onClick={handleNearbyRoutes}
+        className="w-10 h-10 sm:w-10 sm:h-10 bg-primary shadow-lg rounded-lg hover:bg-primary/80 transition-colors touch-manipulation"
+        title="Rutas cercanas"
+      >
+        <MdDirectionsBus className="text-secondary text-xl sm:text-xl mx-auto" />
       </button>
 
       {/* My Location Button */}

@@ -169,4 +169,31 @@ input:checked + .slider:before {
     scrollbar-width: thin;
     scrollbar-color: rgba(147, 197, 253, 0.3) rgba(255, 255, 255, 0.05);
   }
+
+  /* Range Slider Styles */
+  .slider-thumb::-webkit-slider-thumb {
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #93c5fd;
+    cursor: pointer;
+  }
+
+  .slider-thumb::-webkit-slider-thumb:hover {
+    background: #bfdbfe;
+  }
+
+  .slider-thumb::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #93c5fd;
+    cursor: pointer;
+    border: none;
+  }
+
+  .slider-thumb::-moz-range-thumb:hover {
+    background: #bfdbfe;
+  }
 }
