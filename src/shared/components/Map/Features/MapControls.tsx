@@ -1,14 +1,22 @@
 import React from 'react';
 import { useMap } from 'react-map-gl/maplibre';
-import { BiPlus, BiMinus, BiFullscreen, BiExitFullscreen, BiMap } from 'react-icons/bi';
+import { BiPlus, BiMinus, BiFullscreen, BiExitFullscreen, BiCurrentLocation } from 'react-icons/bi';
+import { MdMyLocation, MdNearMe, MdAddLocation, MdContentCopy } from 'react-icons/md';
 import { useAnnotationStore } from '../../../store/annotationStore';
+import { useRutasStore } from '../../../store/rutasStore';
+import { useMapStore } from '../../../store/mapStore';
 import { useBottomSheetStore } from '../../../store/bottomSheetStore';
 
 export const MapControls: React.FC = () => {
   const { current: map } = useMap();
   const [isFullscreen, setIsFullscreen] = React.useState(false);
-  const { annotations } = useAnnotationStore();
-  const { openAnnotations } = useBottomSheetStore();
+  const [showLocationMenu, setShowLocationMenu] = React.useState(false);
+  const [userLocation, setUserLocation] = React.useState<{ lat: number; lng: number } | null>(null);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+  const { addAnnotation } = useAnnotationStore();
+  const { fetchNearbyRoutes } = useRutasStore();
+  const { updateConfig, config } = useMapStore();
+  const { setActiveTab, setSheetState } = useBottomSheetStore();
 
   const zoomIn = () => {
     if (map) map.zoomIn();
@@ -36,6 +44,42 @@ export const MapControls: React.FC = () => {
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
+
+  // Obtener ubicación del usuario
+  const getUserLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const location = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setUserLocation(location);
+          setShowLocationMenu(true);
+        },
+        (error) => {
+          console.error('Error obteniendo ubicación:', error);
+          alert('No se pudo obtener tu ubicación. Verifica los permisos del navegador.');
+        }
+      );
+    } else {
+      alert('Tu navegador no soporta geolocalización');
+    }
+  };
+
+  // Cerrar menú al hacer clic fuera
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowLocationMenu(false);
+      }
+    };
+    
+    if (showLocationMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showLocationMenu]);
 
   return (
     <div className="absolute top-20 right-[5%] sm:top-4 sm:right-4 z-10 flex flex-col gap-1 sm:gap-2">
@@ -70,19 +114,85 @@ export const MapControls: React.FC = () => {
         )}
       </button>
 
-      {/* Annotations Button */}
-      <button
-        onClick={openAnnotations}
-        className="relative w-10 h-10 sm:w-10 sm:h-10 bg-primary shadow-lg rounded-lg hover:bg-primary/80 transition-colors touch-manipulation"
-        title="Anotaciones"
-      >
-        <BiMap className="text-secondary text-xl sm:text-xl mx-auto" />
-        {annotations.length > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
-            {annotations.length}
-          </span>
+      {/* My Location Button */}
+      <div className="relative" ref={menuRef}>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            getUserLocation();
+          }}
+          className="w-10 h-10 sm:w-10 sm:h-10 bg-primary shadow-lg rounded-lg hover:bg-primary/80 transition-colors touch-manipulation"
+          title="Mi ubicación"
+        >
+          <BiCurrentLocation className="text-secondary text-xl sm:text-xl mx-auto" />
+        </button>
+
+        {/* Location Menu */}
+        {showLocationMenu && userLocation && (
+          <div 
+            className="absolute right-full mr-2 top-0 w-56 bg-primary/95 backdrop-blur-md border border-white/10 rounded-lg shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-right-2 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-3 py-2 bg-secondary/20 border-b border-white/10">
+              <p className="text-xs text-white/60">Mi ubicación</p>
+              <p className="text-xs text-white/80 font-mono">
+                {userLocation.lat.toFixed(5)}, {userLocation.lng.toFixed(5)}
+              </p>
+            </div>
+            
+            <button
+              onClick={() => {
+                updateConfig({ ...config, center: userLocation, zoom: 15 });
+                setShowLocationMenu(false);
+              }}
+              className="w-full px-3 py-2.5 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-3 text-white"
+            >
+              <MdMyLocation className="text-secondary text-lg" />
+              <span>Ir a mi ubicación</span>
+            </button>
+            
+            <button
+              onClick={() => {
+                fetchNearbyRoutes(userLocation.lat, userLocation.lng, 1);
+                setActiveTab('info');
+                setSheetState('half');
+                setShowLocationMenu(false);
+              }}
+              className="w-full px-3 py-2.5 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-3 text-white"
+            >
+              <MdNearMe className="text-secondary text-lg" />
+              <span>Rutas cercanas</span>
+            </button>
+            
+            <button
+              onClick={() => {
+                addAnnotation({
+                  type: 'pin',
+                  name: `Mi ubicación ${new Date().toLocaleTimeString('es-SV')}`,
+                  data: { coordinates: { lat: userLocation.lat, lng: userLocation.lng } },
+                });
+                setShowLocationMenu(false);
+              }}
+              className="w-full px-3 py-2.5 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-3 text-white"
+            >
+              <MdAddLocation className="text-secondary text-lg" />
+              <span>Agregar PIN aquí</span>
+            </button>
+            
+            <button
+              onClick={() => {
+                const coords = `${userLocation.lat.toFixed(6)}, ${userLocation.lng.toFixed(6)}`;
+                navigator.clipboard.writeText(coords);
+                setShowLocationMenu(false);
+              }}
+              className="w-full px-3 py-2.5 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-3 text-white"
+            >
+              <MdContentCopy className="text-secondary text-lg" />
+              <span>Copiar coordenadas</span>
+            </button>
+          </div>
         )}
-      </button>
+      </div>
     </div>
   );
 };

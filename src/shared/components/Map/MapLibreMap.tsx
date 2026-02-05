@@ -77,13 +77,8 @@ export const MapLibreMap: React.FC = () => {
   const handleMapClick = useCallback((event: any) => {
     const { lngLat } = event;
     setClickPosition(lngLat);
-    // Agregar pin a anotaciones
-    addAnnotation({
-      type: 'pin',
-      name: `Pin ${new Date().toLocaleTimeString('es-SV')}`,
-      data: { coordinates: lngLat },
-    });
-  }, [addAnnotation]);
+    // Solo agregar pin, sin abrir modal
+  }, []);
 
   const handleMapRightClick = useCallback((event: any) => {
     event.preventDefault();
@@ -331,8 +326,7 @@ export const MapLibreMap: React.FC = () => {
         </div>
       )}
 
-      {/* Transport Routes UI */}
-      <NearbyRoutesPanel />
+      {/* Transport Routes UI - Removed, now integrated in BottomSheet */}
     </div>
   );
 };

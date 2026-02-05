@@ -11,13 +11,13 @@ export const BottomSheet: React.FC = () => {
   const { selectedInfo, currentLevel, parentInfo, setCurrentLevel, setParentInfo, setDepartamentoGeojson } = useMapStore();
   const { annotations, removeAnnotation } = useAnnotationStore();
   const { activeTab, sheetState, setActiveTab, setSheetState } = useBottomSheetStore();
-  const { selectedRoute, clearSelectedRoute } = useRutasStore();
+  const { selectedRoute, clearSelectedRoute, nearbyRoutes, clearNearbyRoutes, selectRoute } = useRutasStore();
 
   const [dragY, setDragY] = React.useState(0);
   const [isDragging, setIsDragging] = React.useState(false);
 
-  // Está abierto si hay alguna info o ruta seleccionada
-  const isOpen = !!(selectedInfo || annotations.length > 0 || selectedRoute);
+  // Está abierto si hay alguna info, ruta seleccionada, o rutas cercanas
+  const isOpen = !!(selectedInfo || annotations.length > 0 || selectedRoute || nearbyRoutes.length > 0);
 
   const [dragStartY, setDragStartY] = React.useState(0);
 
@@ -72,8 +72,9 @@ export const BottomSheet: React.FC = () => {
     setParentInfo(null);
     setDepartamentoGeojson(null);
 
-    // También limpiar ruta
+    // Limpiar ruta y rutas cercanas
     clearSelectedRoute();
+    clearNearbyRoutes();
   };
 
   if (!isOpen) return null;
@@ -122,8 +123,8 @@ export const BottomSheet: React.FC = () => {
                 : 'text-white/60 hover:text-white/80'
                 }`}
             >
-              {selectedRoute ? <BiBus className="inline mr-2" /> : <BiMap className="inline mr-2" />}
-              {selectedRoute ? 'Ruta' : 'Información'}
+              {selectedRoute ? <BiBus className="inline mr-2" /> : nearbyRoutes.length > 0 ? <BiBus className="inline mr-2" /> : <BiMap className="inline mr-2" />}
+              {selectedRoute ? 'Ruta' : nearbyRoutes.length > 0 ? `Rutas (${nearbyRoutes.length})` : 'Información'}
             </button>
             <button
               onClick={() => setActiveTab('annotations')}
@@ -140,11 +141,59 @@ export const BottomSheet: React.FC = () => {
           {/* Content */}
           <div className="flex-1 overflow-y-auto">
             {activeTab === 'info' ? (
-              // Vista de Información (Ruta o Lugar)
+              // Vista de Información (Ruta, Rutas Cercanas o Lugar)
               <div className="p-4 space-y-3">
 
-                {/* 1. INFORMACIÓN DE RUTA */}
-                {selectedRoute ? (
+                {/* 1. RUTAS CERCANAS */}
+                {nearbyRoutes.length > 0 && !selectedRoute ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-bold text-white text-lg">Rutas cercanas</h3>
+                        <p className="text-xs text-white/50">{nearbyRoutes.length} {nearbyRoutes.length === 1 ? 'ruta encontrada' : 'rutas encontradas'}</p>
+                      </div>
+                      <button
+                        onClick={clearNearbyRoutes}
+                        className="text-xs text-white/60 hover:text-white px-3 py-1.5 hover:bg-white/10 rounded-lg transition-colors"
+                      >
+                        Limpiar
+                      </button>
+                    </div>
+                    <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-secondary/30 scrollbar-track-white/5 hover:scrollbar-thumb-secondary/50">
+                      {nearbyRoutes.map((ruta) => {
+                        const subtipo = ruta.subtipo as SubtipoRuta;
+                        const color = RUTA_COLORS[subtipo] || '#6b7280';
+                        return (
+                          <button
+                            key={ruta.codigo}
+                            onClick={() => selectRoute(ruta.codigo)}
+                            className="w-full text-left p-2.5 bg-white/5 hover:bg-secondary/10 rounded-lg border border-white/10 hover:border-secondary/30 transition-all group"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <div
+                                className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold shadow-lg flex-shrink-0 group-hover:scale-105 transition-transform"
+                                style={{ backgroundColor: color }}
+                              >
+                                {ruta.nombre}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-white text-sm group-hover:text-secondary transition-colors">Ruta {ruta.nombre}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-xs text-white/50 truncate">{ruta.subtipo}</span>
+                                  <span className="text-xs text-secondary font-medium">
+                                    {ruta.distancia_m < 1000 ? `${Math.round(ruta.distancia_m)}m` : `${(ruta.distancia_m / 1000).toFixed(1)}km`}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) :
+                  /* 2. INFORMACIÓN DE RUTA */
+                  selectedRoute ? (
                   (() => {
                     const props = selectedRoute.properties;
                     const subtipo = props.SUBTIPO as SubtipoRuta;
