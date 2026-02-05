@@ -1,21 +1,23 @@
+import { useState } from 'react';
 import { useRutasStore } from '../../store/rutasStore';
 import { RUTA_COLORS, type SubtipoRuta } from '../../types/rutas';
 import { BiBus, BiX, BiMapAlt, BiLoaderAlt } from 'react-icons/bi';
 
 export const NearbyRoutesPanel = () => {
+    const [isPanelOpen, setIsPanelOpen] = useState(true);
     const {
         nearbyRoutes,
         isLoading,
-        isPanelOpen,
         searchLocation,
         searchRadius,
         selectedRoute,
         selectRoute,
-        clearNearbyRoutes,
-        togglePanel
+        clearNearbyRoutes
     } = useRutasStore();
 
-    if (!isPanelOpen && nearbyRoutes.length === 0) return null;
+    if (nearbyRoutes.length === 0) return null;
+
+    const togglePanel = () => setIsPanelOpen(!isPanelOpen);
 
     const formatDistance = (meters: number) => {
         if (meters < 1000) {

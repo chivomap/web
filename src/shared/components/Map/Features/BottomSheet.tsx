@@ -1,26 +1,24 @@
 import React from 'react';
-import { useMapStore } from '../../../store/mapStore';
+import { useBottomSheet } from '../../../../hooks/useBottomSheet';
 import { useAnnotationStore } from '../../../store/annotationStore';
-import { useBottomSheetStore } from '../../../store/bottomSheetStore';
 import { useRutasStore } from '../../../store/rutasStore';
+import { useMapStore } from '../../../store/mapStore';
+import { useBottomSheetStore } from '../../../store/bottomSheetStore';
 import { RUTA_COLORS, type SubtipoRuta } from '../../../types/rutas';
 import { BiMap, BiBookmark, BiTrash, BiPin, BiShapePolygon, BiDownload, BiBus, BiRuler, BiRightArrowAlt, BiX, BiLoaderAlt } from 'react-icons/bi';
 import { MdOutlinePolyline } from 'react-icons/md';
 import { Z_INDEX } from '../../../constants/zIndex';
 
 export const BottomSheet: React.FC = () => {
-  const { selectedInfo, currentLevel, parentInfo, setCurrentLevel, setParentInfo, setDepartamentoGeojson } = useMapStore();
+  const { isOpen, sheetState, setSheetState, close, closeContent } = useBottomSheet();
+  const { activeTab, setActiveTab } = useBottomSheetStore();
   const { annotations, removeAnnotation } = useAnnotationStore();
-  const { activeTab, sheetState, setActiveTab, setSheetState } = useBottomSheetStore();
-  const { selectedRoute, clearSelectedRoute, nearbyRoutes, clearNearbyRoutes, selectRoute } = useRutasStore();
+  const { selectedRoute, nearbyRoutes, selectRoute } = useRutasStore();
+  const { selectedInfo, currentLevel, parentInfo, setCurrentLevel, setParentInfo } = useMapStore();
 
   const [dragY, setDragY] = React.useState(0);
   const [isDragging, setIsDragging] = React.useState(false);
   const [radiusDebounce, setRadiusDebounce] = React.useState<ReturnType<typeof setTimeout> | null>(null);
-
-  // Está abierto si hay alguna info, ruta seleccionada, o rutas cercanas
-  const isOpen = !!(selectedInfo || annotations.length > 0 || selectedRoute || nearbyRoutes.length > 0);
-
   const [dragStartY, setDragStartY] = React.useState(0);
 
   const getSheetHeight = () => {
@@ -57,7 +55,7 @@ export const BottomSheet: React.FC = () => {
     if (dragY > 100) {
       if (sheetState === 'full') setSheetState('half');
       else if (sheetState === 'half') setSheetState('peek');
-      else handleClose();
+      else close(); // Cerrar completamente si está en peek
     } else if (dragY < -100) {
       if (sheetState === 'peek') setSheetState('half');
       else if (sheetState === 'half') setSheetState('full');
@@ -65,21 +63,6 @@ export const BottomSheet: React.FC = () => {
 
     setDragY(0);
     setDragStartY(0);
-  };
-
-  const handleClose = () => {
-    useMapStore.getState().setSelectedInfo(null);
-    useMapStore.getState().updateGeojson(null);
-    setCurrentLevel('departamento');
-    setParentInfo(null);
-    setDepartamentoGeojson(null);
-
-    // Limpiar ruta y rutas cercanas
-    clearSelectedRoute();
-    clearNearbyRoutes();
-    
-    // Limpiar timeout si existe
-    if (radiusDebounce) clearTimeout(radiusDebounce);
   };
 
   if (!isOpen) return null;
@@ -91,7 +74,7 @@ export const BottomSheet: React.FC = () => {
         <div
           className="sm:hidden fixed inset-0 bg-black/40"
           style={{ zIndex: Z_INDEX.BOTTOM_SHEET_BACKDROP }}
-          onClick={() => setSheetState('peek')}
+          onClick={close} // Cerrar completamente
         />
       )}
 
@@ -160,7 +143,7 @@ export const BottomSheet: React.FC = () => {
                         <p className="text-xs text-white/50">{nearbyRoutes.length} {nearbyRoutes.length === 1 ? 'ruta encontrada' : 'rutas encontradas'}</p>
                       </div>
                       <button
-                        onClick={clearNearbyRoutes}
+                        onClick={closeContent}
                         className="text-xs text-white/60 hover:text-white px-3 py-1.5 hover:bg-white/10 rounded-lg transition-colors"
                       >
                         Limpiar
@@ -214,7 +197,7 @@ export const BottomSheet: React.FC = () => {
                             key={ruta.codigo}
                             onClick={() => {
                               selectRoute(ruta.codigo);
-                              setSheetState('peek'); // Compactar drawer al seleccionar ruta
+                              // Mantener en half para ver info completa
                             }}
                             className="w-full text-left p-2.5 bg-white/5 hover:bg-secondary/10 rounded-lg border border-white/10 hover:border-secondary/30 transition-all group"
                           >
@@ -269,7 +252,7 @@ export const BottomSheet: React.FC = () => {
                             </div>
                           </div>
                           <button
-                            onClick={clearSelectedRoute}
+                            onClick={closeContent}
                             className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white"
                             title="Cerrar Ruta"
                           >
