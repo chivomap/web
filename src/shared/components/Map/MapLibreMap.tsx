@@ -9,7 +9,7 @@ import { MapStyle } from '../../data/mapStyles';
 import { useThemeStore } from '../../store/themeStore';
 
 import { MapControls, MapMarker, PolygonDisplay, MapStyleSelector, MapScale, BottomSheet, GeoLayer, GeoDistritos } from './Features';
-import { RouteLayer } from '../rutas';
+import { RouteLayer, SearchRadiusLayer } from '../rutas';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './popup-styles.css';
 
@@ -219,6 +219,7 @@ export const MapLibreMap: React.FC = () => {
           <>
             <GeoLayer />
             <GeoDistritos />
+            <SearchRadiusLayer />
             <RouteLayer />
             <BottomSheet />
             {clickPosition && <MapMarker position={clickPosition} />}

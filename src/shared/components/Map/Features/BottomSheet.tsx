@@ -10,7 +10,7 @@ import { MdOutlinePolyline } from 'react-icons/md';
 import { Z_INDEX } from '../../../constants/zIndex';
 
 export const BottomSheet: React.FC = () => {
-  const { isOpen, sheetState, setSheetState, close, closeContent } = useBottomSheet();
+  const { isOpen, sheetState, setSheetState, closeContent } = useBottomSheet();
   const { activeTab, setActiveTab } = useBottomSheetStore();
   const { annotations, removeAnnotation } = useAnnotationStore();
   const { selectedRoute, nearbyRoutes, selectRoute } = useRutasStore();
@@ -55,7 +55,7 @@ export const BottomSheet: React.FC = () => {
     if (dragY > 100) {
       if (sheetState === 'full') setSheetState('half');
       else if (sheetState === 'half') setSheetState('peek');
-      else close(); // Cerrar completamente si está en peek
+      else closeContent(); // Cerrar solo contenido actual
     } else if (dragY < -100) {
       if (sheetState === 'peek') setSheetState('half');
       else if (sheetState === 'half') setSheetState('full');
@@ -74,7 +74,7 @@ export const BottomSheet: React.FC = () => {
         <div
           className="sm:hidden fixed inset-0 bg-black/40"
           style={{ zIndex: Z_INDEX.BOTTOM_SHEET_BACKDROP }}
-          onClick={close} // Cerrar completamente
+          onClick={closeContent} // Cerrar solo contenido actual
         />
       )}
 

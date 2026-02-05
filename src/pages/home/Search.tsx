@@ -106,10 +106,15 @@ export const Search: React.FC = () => {
     setInputValue('');
     if (inputValue) setShowResults(false);
 
+    // Limpiar info geográfica
     updateGeojson(null);
     setSelectedInfo(null);
     setCurrentLevel('departamento');
     setParentInfo(null);
+    
+    // Limpiar rutas
+    useRutasStore.getState().clearSelectedRoute();
+    useRutasStore.getState().clearNearbyRoutes();
   }
 
   const handleClick = async (query: string, whatIs: string, routeCode?: string) => {
@@ -281,14 +286,24 @@ export const Search: React.FC = () => {
                     >
                       <button
                         type="button"
-                        onClick={() => { setMode('routes'); setShowModeSelector(false); }}
+                        onClick={() => { 
+                          setMode('routes'); 
+                          setShowModeSelector(false);
+                          // Limpiar al cambiar modo
+                          handleClearInput();
+                        }}
                         className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:bg-white/10 transition-colors ${mode === 'routes' ? 'text-secondary bg-white/5' : 'text-white'}`}
                       >
                         <BiBus /> Rutas
                       </button>
                       <button
                         type="button"
-                        onClick={() => { setMode('places'); setShowModeSelector(false); }}
+                        onClick={() => { 
+                          setMode('places'); 
+                          setShowModeSelector(false);
+                          // Limpiar al cambiar modo
+                          handleClearInput();
+                        }}
                         className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:bg-white/10 transition-colors ${mode === 'places' ? 'text-secondary bg-white/5' : 'text-white'}`}
                       >
                         <BiMap /> Lugares

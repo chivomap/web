@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useBottomSheetStore } from '../shared/store/bottomSheetStore';
 import { useRutasStore } from '../shared/store/rutasStore';
 import { useMapStore } from '../shared/store/mapStore';
@@ -11,9 +11,14 @@ export const useBottomSheet = () => {
   const { selectedRoute, nearbyRoutes, clearSelectedRoute, clearNearbyRoutes } = useRutasStore();
   const { selectedInfo, setSelectedInfo } = useMapStore();
   const { annotations } = useAnnotationStore();
+  
+  // Prevenir auto-ajuste si usuario modificó manualmente
+  const userAdjustedRef = useRef(false);
+  const prevContentTypeRef = useRef<ContentType>('none');
 
-  // Determinar tipo de contenido actual
+  // Determinar tipo de contenido actual con prioridad clara
   const getContentType = (): ContentType => {
+    // Prioridad: ruta individual > rutas cercanas > info geo > anotaciones
     if (selectedRoute) return 'route';
     if (nearbyRoutes.length > 0) return 'nearbyRoutes';
     if (selectedInfo) return 'geoInfo';
@@ -35,16 +40,56 @@ export const useBottomSheet = () => {
     }
   };
 
-  // Auto-ajustar estado cuando cambia el contenido
+  // Solo auto-ajustar cuando cambia el TIPO de contenido, no cuando usuario ajusta
   useEffect(() => {
-    if (isOpen) {
-      const initialState = getInitialState(contentType);
-      setSheetState(initialState);
+    const prevType = prevContentTypeRef.current;
+    
+    // Si cambió el tipo de contenido (no solo abrió/cerró)
+    if (prevType !== contentType && contentType !== 'none') {
+      // Solo auto-ajustar si usuario no ha tocado el estado manualmente
+      if (!userAdjustedRef.current) {
+        const initialState = getInitialState(contentType);
+        setSheetState(initialState);
+      }
+      // Resetear flag cuando cambia el contenido
+      userAdjustedRef.current = false;
     }
-  }, [contentType, isOpen, setSheetState]);
+    
+    // Si se cerró todo, resetear
+    if (contentType === 'none') {
+      setSheetState('peek');
+      userAdjustedRef.current = false;
+    }
+    
+    prevContentTypeRef.current = contentType;
+  }, [contentType, setSheetState]);
 
-  // Cerrar completamente (limpia todo)
-  const close = () => {
+  // Cerrar solo el contenido actual (inteligente)
+  const closeContent = () => {
+    switch (contentType) {
+      case 'route':
+        clearSelectedRoute();
+        // NO cambiar a rutas cercanas automáticamente
+        // Si hay rutas cercanas, ya se mostrarán por prioridad
+        break;
+      case 'nearbyRoutes':
+        clearNearbyRoutes();
+        // NO cambiar a ruta si existe
+        // Si hay ruta, ya se mostrará por prioridad
+        break;
+      case 'geoInfo':
+        setSelectedInfo(null);
+        useMapStore.getState().updateGeojson(null);
+        break;
+      case 'annotations':
+        // No limpiar anotaciones, solo cambiar tab
+        setActiveTab('info');
+        break;
+    }
+  };
+
+  // Cerrar TODO (solo usar en casos específicos)
+  const closeAll = () => {
     clearSelectedRoute();
     clearNearbyRoutes();
     setSelectedInfo(null);
@@ -53,48 +98,37 @@ export const useBottomSheet = () => {
     useMapStore.getState().setParentInfo(null);
     useMapStore.getState().setDepartamentoGeojson(null);
     
-    // Resetear estado del sheet
     setSheetState('peek');
     setActiveTab('info');
+    userAdjustedRef.current = false;
   };
 
-  // Cerrar solo el contenido actual (mantiene otros)
-  const closeContent = () => {
-    switch (contentType) {
-      case 'route':
-        clearSelectedRoute();
-        break;
-      case 'nearbyRoutes':
-        clearNearbyRoutes();
-        break;
-      case 'geoInfo':
-        setSelectedInfo(null);
-        useMapStore.getState().updateGeojson(null);
-        break;
-    }
-    
-    // Si no queda nada, resetear estado
-    if (getContentType() === 'none') {
-      setSheetState('peek');
-    }
+  // Cuando usuario ajusta manualmente, marcar flag
+  const setSheetStateManual = (state: 'peek' | 'half' | 'full') => {
+    userAdjustedRef.current = true;
+    setSheetState(state);
   };
 
   // Abrir con contenido específico
   const openRoute = (codigo: string) => {
     useRutasStore.getState().selectRoute(codigo);
     setActiveTab('info');
-    setSheetState('half');
+    // No forzar estado, dejar que useEffect lo maneje
   };
 
   const openNearbyRoutes = (lat: number, lng: number, radius?: number) => {
+    // Limpiar ruta seleccionada para mostrar el listado
+    clearSelectedRoute();
     useRutasStore.getState().fetchNearbyRoutes(lat, lng, radius);
     setActiveTab('info');
-    setSheetState('half');
+    // No forzar estado, dejar que useEffect lo maneje
   };
 
   const openAnnotations = () => {
     setActiveTab('annotations');
-    setSheetState('half');
+    if (!isOpen) {
+      setSheetState('half');
+    }
   };
 
   return {
@@ -104,9 +138,9 @@ export const useBottomSheet = () => {
     contentType,
     
     // Acciones
-    close,
     closeContent,
-    setSheetState,
+    closeAll,
+    setSheetState: setSheetStateManual,
     
     // Abrir con contenido
     openRoute,
