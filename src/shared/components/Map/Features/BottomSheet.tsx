@@ -6,6 +6,7 @@ import { useRutasStore } from '../../../store/rutasStore';
 import { RUTA_COLORS, type SubtipoRuta } from '../../../types/rutas';
 import { BiMap, BiBookmark, BiTrash, BiPin, BiShapePolygon, BiDownload, BiBus, BiRuler, BiRightArrowAlt, BiX, BiLoaderAlt } from 'react-icons/bi';
 import { MdOutlinePolyline } from 'react-icons/md';
+import { Z_INDEX } from '../../../constants/zIndex';
 
 export const BottomSheet: React.FC = () => {
   const { selectedInfo, currentLevel, parentInfo, setCurrentLevel, setParentInfo, setDepartamentoGeojson } = useMapStore();
@@ -88,16 +89,18 @@ export const BottomSheet: React.FC = () => {
       {/* Backdrop */}
       {sheetState !== 'peek' && (
         <div
-          className="sm:hidden fixed inset-0 bg-black/40 z-[59]"
+          className="sm:hidden fixed inset-0 bg-black/40"
+          style={{ zIndex: Z_INDEX.BOTTOM_SHEET_BACKDROP }}
           onClick={() => setSheetState('peek')}
         />
       )}
 
       {/* Sheet */}
       <div
-        className="fixed inset-x-0 bottom-0 sm:absolute sm:top-20 sm:bottom-auto sm:left-4 w-full sm:w-80 sm:max-h-[calc(100vh-6rem)] z-[60]"
+        className="fixed inset-x-0 bottom-0 sm:absolute sm:top-20 sm:bottom-auto sm:left-4 w-full sm:w-80 sm:max-h-[calc(100vh-6rem)]"
         style={{
           height: getSheetHeight(),
+          zIndex: Z_INDEX.BOTTOM_SHEET,
           transform: `translateY(${Math.max(0, dragY)}px)`,
           transition: isDragging ? 'none' : 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
@@ -209,7 +212,10 @@ export const BottomSheet: React.FC = () => {
                         return (
                           <button
                             key={ruta.codigo}
-                            onClick={() => selectRoute(ruta.codigo)}
+                            onClick={() => {
+                              selectRoute(ruta.codigo);
+                              setSheetState('peek'); // Compactar drawer al seleccionar ruta
+                            }}
                             className="w-full text-left p-2.5 bg-white/5 hover:bg-secondary/10 rounded-lg border border-white/10 hover:border-secondary/30 transition-all group"
                           >
                             <div className="flex items-center gap-2.5">
