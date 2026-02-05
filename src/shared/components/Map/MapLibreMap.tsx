@@ -9,7 +9,7 @@ import { MapStyle } from '../../data/mapStyles';
 import { useThemeStore } from '../../store/themeStore';
 
 import { MapControls, MapMarker, PolygonDisplay, MapStyleSelector, MapScale, BottomSheet, GeoLayer, GeoDistritos } from './Features';
-import { RouteLayer, NearbyRoutesPanel } from '../rutas';
+import { RouteLayer } from '../rutas';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './popup-styles.css';
 

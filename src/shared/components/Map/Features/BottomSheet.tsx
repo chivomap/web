@@ -16,7 +16,7 @@ export const BottomSheet: React.FC = () => {
 
   const [dragY, setDragY] = React.useState(0);
   const [isDragging, setIsDragging] = React.useState(false);
-  const [radiusDebounce, setRadiusDebounce] = React.useState<NodeJS.Timeout | null>(null);
+  const [radiusDebounce, setRadiusDebounce] = React.useState<ReturnType<typeof setTimeout> | null>(null);
 
   // Está abierto si hay alguna info, ruta seleccionada, o rutas cercanas
   const isOpen = !!(selectedInfo || annotations.length > 0 || selectedRoute || nearbyRoutes.length > 0);

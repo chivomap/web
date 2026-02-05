@@ -7,7 +7,6 @@ import { useMapStore } from '../../shared/store/mapStore';
 import { useAnnotationStore } from '../../shared/store/annotationStore';
 import { getQueryData } from '../../shared/services/GetQueryData';
 import { useRutasStore } from '../../shared/store/rutasStore';
-import { useBottomSheetStore } from '../../shared/store/bottomSheetStore';
 import { TextCarousel } from './TextCarrusel';
 import { useLayoutStore } from '../../shared/store/layoutStore';
 import { useErrorStore } from '../../shared/store/errorStore';
@@ -33,11 +32,10 @@ export const Search: React.FC = () => {
   const { search, department } = layoutStates;
   const { updateGeojson, setSelectedInfo, setCurrentLevel, setParentInfo, selectedInfo } = useMapStore();
 
-  const { selectRoute, allRoutes, fetchAllRoutes, isLoading: isRutasLoading, clearSelectedRoute, fetchNearbyRoutes } = useRutasStore();
+  const { selectRoute, allRoutes, fetchAllRoutes, isLoading: isRutasLoading, clearSelectedRoute } = useRutasStore();
 
   const { addAnnotation } = useAnnotationStore();
   const { showError, setLoading } = useErrorStore();
-  const { setActiveTab, setSheetState } = useBottomSheetStore();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -234,26 +232,6 @@ export const Search: React.FC = () => {
     (mode === 'routes' && filteredRoutes.length > 0);
 
   const isSelfLoading = mode === 'routes' && isRutasLoading && allRoutes.length === 0;
-
-  // Función para buscar rutas cercanas a mi ubicación
-  const handleNearbySearch = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          fetchNearbyRoutes(latitude, longitude, 1);
-          setActiveTab('info');
-          setSheetState('half');
-        },
-        (error) => {
-          console.error('Error obteniendo ubicación:', error);
-          showError(errorHandler.handle(new Error('No se pudo obtener tu ubicación. Verifica los permisos del navegador.')));
-        }
-      );
-    } else {
-      showError(errorHandler.handle(new Error('Tu navegador no soporta geolocalización')));
-    }
-  };
 
   return (
     <>

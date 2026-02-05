@@ -1,5 +1,6 @@
 import React from 'react';
 import { useMap } from 'react-map-gl/maplibre';
+import { LngLat } from 'maplibre-gl';
 import { BiPlus, BiMinus, BiFullscreen, BiExitFullscreen, BiCurrentLocation } from 'react-icons/bi';
 import { MdMyLocation, MdNearMe, MdAddLocation, MdContentCopy, MdDirectionsBus } from 'react-icons/md';
 import { useAnnotationStore } from '../../../store/annotationStore';
@@ -204,7 +205,7 @@ export const MapControls: React.FC = () => {
                 addAnnotation({
                   type: 'pin',
                   name: `Mi ubicación ${new Date().toLocaleTimeString('es-SV')}`,
-                  data: { coordinates: { lat: userLocation.lat, lng: userLocation.lng } },
+                  data: { coordinates: new LngLat(userLocation.lng, userLocation.lat) },
                 });
                 setShowLocationMenu(false);
               }}
