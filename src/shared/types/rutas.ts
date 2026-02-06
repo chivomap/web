@@ -6,6 +6,8 @@ export interface RutaNearby {
   tipo: string;
   subtipo: string;
   sentido: string;
+  departamento: string;
+  kilometros: number;
   distancia_m: number;
 }
 

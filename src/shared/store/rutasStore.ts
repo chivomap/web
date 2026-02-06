@@ -25,6 +25,7 @@ interface RutasState {
 
     // UI State
     isLoading: boolean;
+    showNearbyOnMap: boolean;
     error: string | null;
 
     // Actions
@@ -35,6 +36,7 @@ interface RutasState {
     clearNearbyRoutes: () => void;
     fetchMetadata: () => Promise<void>;
     setRadius: (radius: number) => void;
+    setShowNearbyOnMap: (show: boolean) => void;
     setError: (error: string | null) => void;
 }
 
@@ -47,6 +49,7 @@ export const useRutasStore = create<RutasState>((set, get) => ({
     searchLocation: null,
     searchRadius: 1,
     isLoading: false,
+    showNearbyOnMap: false,
     error: null,
 
     fetchAllRoutes: async () => {
@@ -117,6 +120,10 @@ export const useRutasStore = create<RutasState>((set, get) => ({
 
     setRadius: (radius: number) => {
         set({ searchRadius: Math.min(Math.max(radius, 0.5), 10) });
+    },
+
+    setShowNearbyOnMap: (show: boolean) => {
+        set({ showNearbyOnMap: show });
     },
 
     setError: (error: string | null) => {

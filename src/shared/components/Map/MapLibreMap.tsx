@@ -9,7 +9,7 @@ import { MapStyle } from '../../data/mapStyles';
 import { useThemeStore } from '../../store/themeStore';
 
 import { MapControls, MapMarker, PolygonDisplay, MapStyleSelector, MapScale, BottomSheet, GeoLayer, GeoDistritos } from './Features';
-import { RouteLayer, SearchRadiusLayer } from '../rutas';
+import { RouteLayer, SearchRadiusLayer, NearbyRoutesLayer } from '../rutas';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './popup-styles.css';
 
@@ -18,11 +18,24 @@ export const MapLibreMap: React.FC = () => {
   const [clickPosition, setClickPosition] = useState<LngLat | null>(null);
   const [polygonCoords, setPolygonCoords] = useState<LngLat[]>([]);
   const [hoverInfo, setHoverInfo] = useState<{ name: string; x: number; y: number } | null>(null);
+  const [routeHover, setRouteHover] = useState<{ 
+    codigo: string; 
+    nombre: string; 
+    tipo: string;
+    subtipo: string;
+    sentido: string;
+    departamento: string;
+    kilometros: number;
+    distancia_m: number;
+    x: number; 
+    y: number;
+  } | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; lngLat: LngLat } | null>(null);
   const [isDrawingMode, setIsDrawingMode] = useState(false);
+  const [interactiveLayers, setInteractiveLayers] = useState<string[]>(['distritos-fill']);
   const { config, updateConfig } = useMapStore();
   const { addAnnotation, annotations } = useAnnotationStore();
-  const { fetchNearbyRoutes, selectedRoute } = useRutasStore();
+  const { fetchNearbyRoutes, selectedRoute, nearbyRoutes, showNearbyOnMap, selectRoute } = useRutasStore();
   const { currentMapStyle, setMapStyle } = useThemeStore();
   const { center, zoom } = config;
 
@@ -64,8 +77,42 @@ export const MapLibreMap: React.FC = () => {
   }, [selectedRoute]);
 
   const handleMapLoad = useCallback(() => {
+    if (mapRef.current) {
+      const map = mapRef.current.getMap();
+      
+      // Crear ícono de flecha SVG
+      const arrowSvg = `
+        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2 L12 18 M12 18 L6 12 M12 18 L18 12" 
+                stroke="white" 
+                stroke-width="3" 
+                fill="none" 
+                stroke-linecap="round" 
+                stroke-linejoin="round"/>
+        </svg>
+      `;
+      
+      const img = new Image(24, 24);
+      img.onload = () => {
+        if (!map.hasImage('arrow')) {
+          map.addImage('arrow', img);
+        }
+      };
+      img.src = 'data:image/svg+xml;base64,' + btoa(arrowSvg);
+    }
+    
     setMapReady(true);
   }, []);
+
+  // Update interactive layers when nearby routes change
+  useEffect(() => {
+    if (showNearbyOnMap && nearbyRoutes.length > 0) {
+      const routeLayers = nearbyRoutes.map(r => `nearby-route-line-${r.codigo}`);
+      setInteractiveLayers(['distritos-fill', ...routeLayers]);
+    } else {
+      setInteractiveLayers(['distritos-fill']);
+    }
+  }, [showNearbyOnMap, nearbyRoutes]);
 
   const handleViewStateChange = useCallback((evt: ViewStateChangeEvent) => {
     updateConfig({
@@ -75,10 +122,21 @@ export const MapLibreMap: React.FC = () => {
   }, [updateConfig]);
 
   const handleMapClick = useCallback((event: any) => {
-    const { lngLat } = event;
+    const { lngLat, features } = event;
+    
+    // Check if clicked on a nearby route
+    if (features && features.length > 0) {
+      const routeFeature = features.find((f: any) => f.layer?.id?.startsWith('nearby-route-line-'));
+      if (routeFeature) {
+        const codigo = routeFeature.layer.id.replace('nearby-route-line-', '');
+        selectRoute(codigo);
+        return;
+      }
+    }
+    
     setClickPosition(lngLat);
     // Solo agregar pin, sin abrir modal
-  }, []);
+  }, [nearbyRoutes, selectRoute]);
 
   const handleMapRightClick = useCallback((event: any) => {
     event.preventDefault();
@@ -156,6 +214,30 @@ export const MapLibreMap: React.FC = () => {
         onMouseMove={(event) => {
           if (event.features && event.features.length > 0) {
             const feature = event.features[0];
+            
+            // Check for nearby route hover
+            if (feature.layer?.id?.startsWith('nearby-route-line-')) {
+              const codigo = feature.layer.id.replace('nearby-route-line-', '');
+              const ruta = nearbyRoutes.find(r => r.codigo === codigo);
+              
+              if (ruta) {
+                event.target.getCanvas().style.cursor = 'pointer';
+                setRouteHover({
+                  codigo: ruta.codigo,
+                  nombre: ruta.nombre,
+                  tipo: ruta.tipo,
+                  subtipo: ruta.subtipo,
+                  sentido: ruta.sentido,
+                  departamento: ruta.departamento,
+                  kilometros: ruta.kilometros,
+                  distancia_m: ruta.distancia_m,
+                  x: event.point.x,
+                  y: event.point.y
+                });
+                return;
+              }
+            }
+            
             if (feature.source === 'distritos-source') {
               event.target.getCanvas().style.cursor = 'pointer';
 
@@ -187,6 +269,7 @@ export const MapLibreMap: React.FC = () => {
           } else {
             event.target.getCanvas().style.cursor = '';
             setHoverInfo(null);
+            setRouteHover(null);
             // Limpiar todos los hovers
             try {
               event.target.queryRenderedFeatures().forEach((f: any) => {
@@ -207,7 +290,7 @@ export const MapLibreMap: React.FC = () => {
           [-91.00994252677712, 11.214449814812207], // Southwest
           [-85.6233130419287, 17.838768214469866]   // Northeast
         ]}
-        interactiveLayerIds={['distritos-fill']}
+        interactiveLayerIds={interactiveLayers}
         attributionControl={false}
       >
         <MapStyleSelector
@@ -220,6 +303,7 @@ export const MapLibreMap: React.FC = () => {
             <GeoLayer />
             <GeoDistritos />
             <SearchRadiusLayer />
+            <NearbyRoutesLayer />
             <RouteLayer />
             <BottomSheet />
             {clickPosition && <MapMarker position={clickPosition} />}
@@ -314,6 +398,47 @@ export const MapLibreMap: React.FC = () => {
           }}
         >
           {hoverInfo.name}
+        </div>
+      )}
+
+      {/* Route hover tooltip */}
+      {routeHover && (
+        <div
+          className="fixed z-50 bg-secondary/95 backdrop-blur-sm text-white px-3 py-2.5 rounded-lg shadow-xl border border-white/20 pointer-events-none min-w-[220px]"
+          style={{
+            left: routeHover.x + 10,
+            top: routeHover.y + 10
+          }}
+        >
+          <div className="font-bold text-base mb-1">{routeHover.codigo}</div>
+          <div className="text-xs text-white/90 mb-2">{routeHover.nombre}</div>
+          <div className="space-y-0.5 text-xs">
+            <div className="flex justify-between gap-3">
+              <span className="text-white/70">Departamento:</span>
+              <span className="font-medium text-right">{routeHover.departamento}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-white/70">Tipo:</span>
+              <span className="font-medium text-right">{routeHover.tipo}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-white/70">Subtipo:</span>
+              <span className="font-medium text-right">{routeHover.subtipo}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-white/70">Sentido:</span>
+              <span className="font-medium text-right">{routeHover.sentido}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-white/70">Longitud ruta:</span>
+              <span className="font-medium text-right">{routeHover.kilometros?.toFixed(2) || '0.00'} km</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-white/70">Distancia:</span>
+              <span className="font-medium text-right">{routeHover.distancia_m < 1000 ? `${Math.round(routeHover.distancia_m)}m` : `${(routeHover.distancia_m / 1000).toFixed(2)}km`}</span>
+            </div>
+          </div>
+          <div className="text-[10px] text-white/50 mt-2 text-center">Click para ver detalles</div>
         </div>
       )}
 
