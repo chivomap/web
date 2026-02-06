@@ -58,7 +58,7 @@ export const MapLayout: React.FC<{ children: React.ReactNode }> = ({ children })
 
 
       {/* Search */}
-      <div className="fixed top-5 w-[90%] max-w-2xl" style={{ zIndex: 60, left: '50%', marginLeft: '-45%' }}>
+      <div className="fixed top-5 left-1/2 -translate-x-1/2 w-[90%] max-w-2xl" style={{ zIndex: 60 }}>
         {children}
       </div>
 
