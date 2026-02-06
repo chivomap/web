@@ -4,6 +4,7 @@ import { LayerModal } from '../index';
 import { useBottomSheetStore } from '../../store/bottomSheetStore';
 import { useBottomSheet } from '../../../hooks/useBottomSheet';
 import { BottomSheet } from '../Map/Features/BottomSheet';
+import { NearbyRoutesCTA } from '../Map/Features/NearbyRoutesCTA';
 
 const Map = lazy(() => import('../Map').then(m => ({ default: m.Map })));
 
@@ -72,6 +73,9 @@ export const MapLayout: React.FC<{ children: React.ReactNode }> = ({ children })
 
       {/* Drawer - al mismo nivel que backdrop */}
       <BottomSheet />
+
+      {/* CTA for nearby routes */}
+      <NearbyRoutesCTA />
 
       {/* Espacio vacío reservado para otro contenido */}
       <div className="w-[100px] h-[100px] fixed bottom-[100px] right-2 opacity-80 md:right-4 md:bottom-4 md:w-[120px] md:h-[120px]" style={{ zIndex: 10 }}>
