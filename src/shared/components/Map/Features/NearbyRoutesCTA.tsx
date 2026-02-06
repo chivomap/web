@@ -28,7 +28,7 @@ export const NearbyRoutesCTA: React.FC = () => {
   };
 
   // Hide if already showing nearby routes
-  if (nearbyRoutes.length > 0) return null;
+  if (nearbyRoutes && nearbyRoutes.length > 0) return null;
 
   return (
     <button

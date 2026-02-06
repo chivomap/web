@@ -15,7 +15,7 @@ export const NearbyRoutesPanel = () => {
         clearNearbyRoutes
     } = useRutasStore();
 
-    if (nearbyRoutes.length === 0) return null;
+    if (!nearbyRoutes || nearbyRoutes.length === 0) return null;
 
     const togglePanel = () => setIsPanelOpen(!isPanelOpen);
 

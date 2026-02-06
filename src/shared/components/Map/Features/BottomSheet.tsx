@@ -103,8 +103,8 @@ export const BottomSheet: React.FC = () => {
                 : 'text-white/60 hover:text-white/80'
                 }`}
             >
-              {selectedRoute ? <BiBus className="inline mr-2" /> : nearbyRoutes.length > 0 ? <BiBus className="inline mr-2" /> : <BiMap className="inline mr-2" />}
-              {selectedRoute ? 'Ruta' : nearbyRoutes.length > 0 ? `Rutas (${nearbyRoutes.length})` : 'Información'}
+              {selectedRoute ? <BiBus className="inline mr-2" /> : (nearbyRoutes && nearbyRoutes.length > 0) ? <BiBus className="inline mr-2" /> : <BiMap className="inline mr-2" />}
+              {selectedRoute ? 'Ruta' : (nearbyRoutes && nearbyRoutes.length > 0) ? `Rutas (${nearbyRoutes.length})` : 'Información'}
             </button>
             <button
               onClick={() => setActiveTab('annotations')}
@@ -125,7 +125,7 @@ export const BottomSheet: React.FC = () => {
               <div className="p-4 space-y-3">
 
                 {/* 1. RUTAS CERCANAS */}
-                {nearbyRoutes.length > 0 && !selectedRoute ? (
+                {nearbyRoutes && nearbyRoutes.length > 0 && !selectedRoute ? (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div>

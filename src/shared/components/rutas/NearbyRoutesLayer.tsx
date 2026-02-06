@@ -10,7 +10,7 @@ export const NearbyRoutesLayer: React.FC = () => {
 
   // Cargar geometrías de rutas cercanas en lotes
   useEffect(() => {
-    if (!showNearbyOnMap || nearbyRoutes.length === 0) {
+    if (!showNearbyOnMap || !nearbyRoutes || nearbyRoutes.length === 0) {
       setLoadedRoutes(new Map());
       return;
     }
@@ -46,7 +46,7 @@ export const NearbyRoutesLayer: React.FC = () => {
   }, [nearbyRoutes, showNearbyOnMap]);
 
   // Ocultar rutas cercanas cuando hay una ruta seleccionada
-  if (!showNearbyOnMap || nearbyRoutes.length === 0 || selectedRoute) return null;
+  if (!showNearbyOnMap || !nearbyRoutes || nearbyRoutes.length === 0 || selectedRoute) return null;
 
   return (
     <>

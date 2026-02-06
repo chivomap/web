@@ -106,7 +106,7 @@ export const MapLibreMap: React.FC = () => {
 
   // Update interactive layers when nearby routes change
   useEffect(() => {
-    if (showNearbyOnMap && nearbyRoutes.length > 0) {
+    if (showNearbyOnMap && nearbyRoutes && nearbyRoutes.length > 0) {
       const routeLayers = nearbyRoutes.flatMap(r => [
         `nearby-route-hitbox-${r.codigo}`,
         `nearby-route-line-${r.codigo}`
