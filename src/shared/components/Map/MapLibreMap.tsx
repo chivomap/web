@@ -124,7 +124,16 @@ export const MapLibreMap: React.FC = () => {
     });
   }, [updateConfig]);
 
+  const [longPressTimer, setLongPressTimer] = React.useState<number | null>(null);
+  const [longPressTriggered, setLongPressTriggered] = React.useState(false);
+
   const handleMapClick = useCallback((event: any) => {
+    // Si fue un long press, no hacer nada en el click
+    if (longPressTriggered) {
+      setLongPressTriggered(false);
+      return;
+    }
+
     const { lngLat, features } = event;
     
     // Check if clicked on a nearby route (hitbox or line)
@@ -146,7 +155,7 @@ export const MapLibreMap: React.FC = () => {
     
     setClickPosition(lngLat);
     // Solo agregar pin, sin abrir modal
-  }, [nearbyRoutes, selectRoute]);
+  }, [nearbyRoutes, selectRoute, longPressTriggered]);
 
   const handleMapRightClick = useCallback((event: any) => {
     event.preventDefault();
@@ -158,6 +167,30 @@ export const MapLibreMap: React.FC = () => {
       setContextMenu({ x: point.x, y: point.y, lngLat });
     }
   }, [isDrawingMode]);
+
+  // Long press handlers for mobile
+  const handleTouchStart = useCallback((event: any) => {
+    const timer = setTimeout(() => {
+      const { lngLat, point } = event;
+      setLongPressTriggered(true);
+      setContextMenu({ x: point.x, y: point.y, lngLat });
+    }, 500); // 500ms para long press
+    setLongPressTimer(timer);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  }, [longPressTimer]);
+
+  const handleTouchMove = useCallback(() => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  }, [longPressTimer]);
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.key === 'Escape') {
@@ -305,6 +338,9 @@ export const MapLibreMap: React.FC = () => {
           }
         }}
         onContextMenu={handleMapRightClick}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchMove={handleTouchMove}
         maxBounds={[
           [-91.00994252677712, 11.214449814812207], // Southwest
           [-85.6233130419287, 17.838768214469866]   // Northeast
@@ -466,13 +502,13 @@ export const MapLibreMap: React.FC = () => {
       {/* Route hover tooltip */}
       {routeHover && (
         <div
-          className="fixed z-50 bg-secondary/95 backdrop-blur-sm text-white px-3 py-2.5 rounded-lg shadow-xl border border-white/20 pointer-events-none min-w-[220px]"
+          className="fixed z-50 bg-primary/95 backdrop-blur-sm text-white px-3 py-2.5 rounded-lg shadow-xl border border-white/20 pointer-events-none min-w-[220px]"
           style={{
             left: routeHover.x + 10,
             top: routeHover.y + 10
           }}
         >
-          <div className="font-bold text-base mb-1">{routeHover.codigo}</div>
+          <div className="font-bold text-base mb-1 text-secondary">Ruta {routeHover.codigo}</div>
           <div className="text-xs text-white/90 mb-2">{routeHover.nombre}</div>
           <div className="space-y-0.5 text-xs">
             <div className="flex justify-between gap-3">

@@ -20,7 +20,9 @@ export const useBottomSheet = () => {
   const getContentType = (): ContentType => {
     // Prioridad: ruta individual > rutas cercanas > info geo > anotaciones
     if (selectedRoute) return 'route';
-    if (nearbyRoutes && nearbyRoutes.length > 0) return 'nearbyRoutes';
+    // Mostrar nearbyRoutes si hay searchLocation (aunque esté vacío)
+    const { searchLocation } = useRutasStore.getState();
+    if (searchLocation || (nearbyRoutes && nearbyRoutes.length > 0)) return 'nearbyRoutes';
     if (selectedInfo) return 'geoInfo';
     if (annotations && annotations.length > 0) return 'annotations';
     return 'none';

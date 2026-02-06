@@ -125,12 +125,17 @@ export const BottomSheet: React.FC = () => {
               <div className="p-4 space-y-3">
 
                 {/* 1. RUTAS CERCANAS */}
-                {nearbyRoutes && nearbyRoutes.length > 0 && !selectedRoute ? (
+                {(useRutasStore.getState().searchLocation || (nearbyRoutes && nearbyRoutes.length > 0)) && !selectedRoute ? (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-bold text-white text-lg">Rutas cercanas</h3>
-                        <p className="text-xs text-white/50">{nearbyRoutes.length} {nearbyRoutes.length === 1 ? 'ruta encontrada' : 'rutas encontradas'}</p>
+                        <p className="text-xs text-white/50">
+                          {nearbyRoutes && nearbyRoutes.length > 0 
+                            ? `${nearbyRoutes.length} ${nearbyRoutes.length === 1 ? 'ruta encontrada' : 'rutas encontradas'}`
+                            : 'No se encontraron rutas en esta área'
+                          }
+                        </p>
                       </div>
                       <button
                         onClick={() => {
@@ -180,14 +185,15 @@ export const BottomSheet: React.FC = () => {
                       </div>
                     )}
 
-                    <div className="space-y-2 pr-2">
-                      {nearbyRoutes.map((ruta) => {
-                        return (
-                          <button
-                            key={ruta.codigo}
-                            onClick={() => {
-                              selectRoute(ruta.codigo);
-                              // Mantener en half para ver info completa
+                    {nearbyRoutes && nearbyRoutes.length > 0 && (
+                      <div className="space-y-2 pr-2">
+                        {nearbyRoutes.map((ruta) => {
+                          return (
+                            <button
+                              key={ruta.codigo}
+                              onClick={() => {
+                                selectRoute(ruta.codigo);
+                                // Mantener en half para ver info completa
                             }}
                             className="w-full text-left p-2.5 bg-white/5 hover:bg-secondary/10 rounded-lg border border-white/10 hover:border-secondary/30 transition-all group"
                           >
@@ -212,7 +218,8 @@ export const BottomSheet: React.FC = () => {
                           </button>
                         );
                       })}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 ) :
                   /* 2. INFORMACIÓN DE RUTA */
