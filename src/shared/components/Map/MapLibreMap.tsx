@@ -124,15 +124,7 @@ export const MapLibreMap: React.FC = () => {
     });
   }, [updateConfig]);
 
-  const [longPressTimer, setLongPressTimer] = React.useState<number | null>(null);
-  const [longPressTriggered, setLongPressTriggered] = React.useState(false);
-
   const handleMapClick = useCallback((event: any) => {
-    // Si fue un long press, no hacer nada en el click
-    if (longPressTriggered) {
-      setLongPressTriggered(false);
-      return;
-    }
 
     const { lngLat, features } = event;
     
@@ -155,7 +147,7 @@ export const MapLibreMap: React.FC = () => {
     
     setClickPosition(lngLat);
     // Solo agregar pin, sin abrir modal
-  }, [nearbyRoutes, selectRoute, longPressTriggered]);
+  }, [nearbyRoutes, selectRoute]);
 
   const handleMapRightClick = useCallback((event: any) => {
     event.preventDefault();
@@ -167,30 +159,6 @@ export const MapLibreMap: React.FC = () => {
       setContextMenu({ x: point.x, y: point.y, lngLat });
     }
   }, [isDrawingMode]);
-
-  // Long press handlers for mobile
-  const handleTouchStart = useCallback((event: any) => {
-    const timer = setTimeout(() => {
-      const { lngLat, point } = event;
-      setLongPressTriggered(true);
-      setContextMenu({ x: point.x, y: point.y, lngLat });
-    }, 500); // 500ms para long press
-    setLongPressTimer(timer);
-  }, []);
-
-  const handleTouchEnd = useCallback(() => {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
-  }, [longPressTimer]);
-
-  const handleTouchMove = useCallback(() => {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
-  }, [longPressTimer]);
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.key === 'Escape') {
@@ -338,9 +306,6 @@ export const MapLibreMap: React.FC = () => {
           }
         }}
         onContextMenu={handleMapRightClick}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onTouchMove={handleTouchMove}
         maxBounds={[
           [-91.00994252677712, 11.214449814812207], // Southwest
           [-85.6233130419287, 17.838768214469866]   // Northeast
