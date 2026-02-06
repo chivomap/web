@@ -4,7 +4,6 @@ import { useAnnotationStore } from '../../../store/annotationStore';
 import { useRutasStore } from '../../../store/rutasStore';
 import { useMapStore } from '../../../store/mapStore';
 import { useBottomSheetStore } from '../../../store/bottomSheetStore';
-import { RUTA_COLORS, type SubtipoRuta } from '../../../types/rutas';
 import { BiMap, BiBookmark, BiTrash, BiPin, BiShapePolygon, BiDownload, BiBus, BiRuler, BiRightArrowAlt, BiX, BiLoaderAlt } from 'react-icons/bi';
 import { MdOutlinePolyline } from 'react-icons/md';
 import { Z_INDEX } from '../../../constants/zIndex';
@@ -183,8 +182,6 @@ export const BottomSheet: React.FC = () => {
 
                     <div className="space-y-2 pr-2">
                       {nearbyRoutes.map((ruta) => {
-                        const subtipo = ruta.subtipo as SubtipoRuta;
-                        const color = RUTA_COLORS[subtipo] || '#6b7280';
                         return (
                           <button
                             key={ruta.codigo}
@@ -222,9 +219,6 @@ export const BottomSheet: React.FC = () => {
                   selectedRoute ? (
                   (() => {
                     const props = selectedRoute.properties;
-                    const subtipo = props.SUBTIPO as SubtipoRuta;
-                    const color = RUTA_COLORS[subtipo] || '#6b7280';
-
                     return (
                       <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                         {/* Header with color accent */}
