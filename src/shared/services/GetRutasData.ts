@@ -12,6 +12,15 @@ import type {
 const API_BASE = `${env.API_URL}/rutas`;
 
 /**
+ * Check network status before making request
+ */
+const checkNetwork = () => {
+    if (!navigator.onLine) {
+        throw createNetworkError('No hay conexión a internet');
+    }
+};
+
+/**
  * Obtiene rutas cercanas a una ubicación
  */
 export const getNearbyRoutes = async (
@@ -20,6 +29,8 @@ export const getNearbyRoutes = async (
     radius: number = 1
 ): Promise<NearbyResponse> => {
     try {
+        checkNetwork();
+        
         const url = `${API_BASE}/nearby?lat=${lat}&lng=${lng}&radius=${radius}`;
 
         if (isDevelopment && env.ENABLE_CONSOLE_LOGS) {
@@ -67,6 +78,8 @@ export const getNearbyRoutes = async (
  */
 export const searchRoutes = async (query: string): Promise<SearchResponse> => {
     try {
+        checkNetwork();
+        
         const url = `${API_BASE}/search?q=${encodeURIComponent(query)}`;
 
         const controller = new AbortController();
@@ -102,6 +115,8 @@ export const getRouteByCode = async (
     retries = 2, 
     delay = 500
 ): Promise<RutaFeature | null> => {
+    checkNetwork();
+    
     for (let attempt = 0; attempt <= retries; attempt++) {
         try {
             const url = `${API_BASE}/${encodeURIComponent(codigo)}`;
@@ -149,6 +164,8 @@ export const getRoutesBatch = async (
     retries = 3, 
     delay = 1000
 ): Promise<Record<string, RutaFeature>> => {
+    checkNetwork();
+    
     for (let attempt = 0; attempt <= retries; attempt++) {
         try {
             const url = `${API_BASE}/batch`;
