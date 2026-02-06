@@ -344,16 +344,16 @@ export const MapLibreMap: React.FC = () => {
             onClick={() => setContextMenu(null)}
           />
           <div
-            className="fixed z-[71] bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-2 min-w-[240px] overflow-hidden"
+            className="fixed z-[71] bg-primary/95 backdrop-blur-md rounded-xl shadow-2xl border border-white/10 py-2 min-w-[240px] overflow-hidden"
             style={{
               left: contextMenu.x,
               top: contextMenu.y
             }}
           >
             {/* Header con coordenadas */}
-            <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-              <div className="text-xs font-medium text-gray-500 dark:text-gray-400">Coordenadas</div>
-              <div className="text-xs font-mono text-gray-700 dark:text-gray-300 mt-0.5">
+            <div className="px-4 py-2 border-b border-white/10">
+              <div className="text-xs font-medium text-white/60">Coordenadas</div>
+              <div className="text-xs font-mono text-white/80 mt-0.5">
                 {contextMenu.lngLat.lat.toFixed(6)}, {contextMenu.lngLat.lng.toFixed(6)}
               </div>
             </div>

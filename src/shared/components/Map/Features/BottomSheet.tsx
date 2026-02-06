@@ -8,6 +8,7 @@ import { RUTA_COLORS, type SubtipoRuta } from '../../../types/rutas';
 import { BiMap, BiBookmark, BiTrash, BiPin, BiShapePolygon, BiDownload, BiBus, BiRuler, BiRightArrowAlt, BiX, BiLoaderAlt } from 'react-icons/bi';
 import { MdOutlinePolyline } from 'react-icons/md';
 import { Z_INDEX } from '../../../constants/zIndex';
+import { RouteCodeBadge } from '../../rutas/RouteCodeBadge';
 
 export const BottomSheet: React.FC = () => {
   const { isOpen, sheetState, setSheetState, closeContent } = useBottomSheet();
@@ -119,7 +120,7 @@ export const BottomSheet: React.FC = () => {
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
             {activeTab === 'info' ? (
               // Vista de Información (Ruta, Rutas Cercanas o Lugar)
               <div className="p-4 space-y-3">
@@ -133,7 +134,9 @@ export const BottomSheet: React.FC = () => {
                         <p className="text-xs text-white/50">{nearbyRoutes.length} {nearbyRoutes.length === 1 ? 'ruta encontrada' : 'rutas encontradas'}</p>
                       </div>
                       <button
-                        onClick={closeContent}
+                        onClick={() => {
+                          useRutasStore.getState().clearNearbyRoutes();
+                        }}
                         className="text-xs text-white/60 hover:text-white px-3 py-1.5 hover:bg-white/10 rounded-lg transition-colors"
                       >
                         Limpiar
@@ -178,7 +181,7 @@ export const BottomSheet: React.FC = () => {
                       </div>
                     )}
 
-                    <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-secondary/30 scrollbar-track-white/5 hover:scrollbar-thumb-secondary/50">
+                    <div className="space-y-2 pr-2">
                       {nearbyRoutes.map((ruta) => {
                         const subtipo = ruta.subtipo as SubtipoRuta;
                         const color = RUTA_COLORS[subtipo] || '#6b7280';
@@ -192,16 +195,17 @@ export const BottomSheet: React.FC = () => {
                             className="w-full text-left p-2.5 bg-white/5 hover:bg-secondary/10 rounded-lg border border-white/10 hover:border-secondary/30 transition-all group"
                           >
                             <div className="flex items-center gap-2.5">
-                              <div
-                                className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold shadow-lg flex-shrink-0 group-hover:scale-105 transition-transform"
-                                style={{ backgroundColor: color }}
-                              >
-                                {ruta.nombre}
-                              </div>
+                              <RouteCodeBadge 
+                                code={ruta.nombre} 
+                                subtipo={ruta.subtipo}
+                              />
                               <div className="flex-1 min-w-0">
                                 <p className="font-semibold text-white text-sm group-hover:text-secondary transition-colors">Ruta {ruta.nombre}</p>
-                                <div className="flex items-center gap-2 mt-0.5">
+                                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                   <span className="text-xs text-white/50 truncate">{ruta.subtipo}</span>
+                                  {ruta.departamento && (
+                                    <span className="text-xs text-white/40">• {ruta.departamento}</span>
+                                  )}
                                   <span className="text-xs text-secondary font-medium">
                                     {ruta.distancia_m < 1000 ? `${Math.round(ruta.distancia_m)}m` : `${(ruta.distancia_m / 1000).toFixed(1)}km`}
                                   </span>
@@ -226,12 +230,10 @@ export const BottomSheet: React.FC = () => {
                         {/* Header with color accent */}
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-3">
-                            <div
-                              className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg font-bold shadow-lg"
-                              style={{ backgroundColor: color }}
-                            >
-                              {props.Nombre_de_}
-                            </div>
+                            <RouteCodeBadge 
+                              code={props.Nombre_de_} 
+                              subtipo={props.SUBTIPO}
+                            />
                             <div className="flex-1 min-w-0">
                               <h3 className="font-bold text-lg leading-tight text-white truncate">
                                 Ruta {props.Nombre_de_}
@@ -242,9 +244,11 @@ export const BottomSheet: React.FC = () => {
                             </div>
                           </div>
                           <button
-                            onClick={closeContent}
+                            onClick={() => {
+                              useRutasStore.getState().clearSelectedRoute();
+                            }}
                             className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white"
-                            title="Cerrar Ruta"
+                            title="Volver al listado"
                           >
                             <BiX className="text-2xl" />
                           </button>

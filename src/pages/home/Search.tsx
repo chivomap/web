@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { BiSearchAlt as SearchIcon, BiX as ClearIcon, BiBus, BiMap, BiChevronDown, BiLoaderAlt } from "react-icons/bi";
+import { BiX as ClearIcon, BiBus, BiMap, BiChevronDown, BiLoaderAlt } from "react-icons/bi";
 import { FaBus } from "react-icons/fa";
 import Fuse from 'fuse.js';
 import { getGeoData, GeoDataSearch } from "../../shared/services/GetGeoData";
@@ -13,6 +13,7 @@ import { useErrorStore } from '../../shared/store/errorStore';
 import { errorHandler } from '../../shared/errors/ErrorHandler';
 import { Z_INDEX } from '../../shared/constants/zIndex';
 import { useSearchStore } from '../../shared/store/searchStore';
+import { RouteCodeBadge } from '../../shared/components/rutas/RouteCodeBadge';
 
 type SearchMode = 'routes' | 'places';
 
@@ -254,7 +255,7 @@ export const Search: React.FC = () => {
                 ${showResults ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}
               `} />
 
-              <div className="relative flex items-center bg-primary/95 backdrop-blur-md rounded-xl border border-white/10 shadow-2xl overflow-visible pointer-events-auto">
+              <div className="relative flex items-center bg-primary backdrop-blur-sm rounded-xl border border-white/10 shadow-2xl overflow-visible pointer-events-auto">
 
                 <div className="relative border-r border-white/10 pr-1">
                   <button
@@ -313,7 +314,7 @@ export const Search: React.FC = () => {
                   autoComplete="off"
                 />
 
-                {inputValue ? (
+                {inputValue && (
                   <button
                     type="button"
                     onClick={handleClearInput}
@@ -321,8 +322,6 @@ export const Search: React.FC = () => {
                   >
                     {isSelfLoading ? <BiLoaderAlt className="text-xl animate-spin text-secondary" /> : <ClearIcon className="text-xl" />}
                   </button>
-                ) : (
-                  <SearchIcon className="mr-4 text-xl text-white/20 pointer-events-none" />
                 )}
               </div>
             </div>
@@ -333,7 +332,7 @@ export const Search: React.FC = () => {
                   absolute top-full mt-2 w-full left-0 
                   bg-primary/95 backdrop-blur-md 
                   rounded-xl border border-white/10 shadow-2xl 
-                  overflow-hidden max-h-[60vh] overflow-y-auto
+                  overflow-hidden max-h-[60vh] overflow-y-auto custom-scrollbar
                   animate-slide-up pointer-events-auto
                 "
               >
@@ -356,14 +355,11 @@ export const Search: React.FC = () => {
                           >
                             <div className="flex justify-between items-center">
                               <div className="flex items-center gap-3">
-                                {/* Icono de Ruta Mejorado */}
-                                <div className="
-                                  min-w-[2rem] h-8 px-2 rounded-lg bg-secondary/20 text-secondary 
-                                  flex items-center justify-center font-bold text-xs
-                                  group-hover:scale-110 transition-transform whitespace-nowrap
-                                ">
-                                  {ruta.nombre.replace('Ruta ', '').split(' ')[0]}
-                                </div>
+                                <RouteCodeBadge 
+                                  code={ruta.nombre.replace('Ruta ', '').split(' ')[0]} 
+                                  subtipo={ruta.subtipo}
+                                  size="sm"
+                                />
                                 <div>
                                   <p className="font-semibold text-white group-hover:text-secondary transition-colors">
                                     {ruta.nombre}
@@ -421,7 +417,7 @@ export const Search: React.FC = () => {
 
                         {filteredMunicipios.length > 0 && (
                           <div>
-                            <p className="px-4 py-2 text-xs font-semibold text-green-400 uppercase tracking-wider bg-green-400/10">
+                            <p className="px-4 py-2 text-xs font-semibold text-secondary uppercase tracking-wider bg-secondary/10">
                               Municipios
                             </p>
                             {filteredMunicipios.map((muni, index) => (
@@ -439,7 +435,7 @@ export const Search: React.FC = () => {
 
                         {filteredDistritos.length > 0 && (
                           <div>
-                            <p className="px-4 py-2 text-xs font-semibold text-blue-400 uppercase tracking-wider bg-blue-400/10">
+                            <p className="px-4 py-2 text-xs font-semibold text-secondary uppercase tracking-wider bg-secondary/10">
                               Distritos
                             </p>
                             {filteredDistritos.map((dist, index) => (

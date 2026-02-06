@@ -25,7 +25,7 @@ export const PanelConfig = () => {
     <>
       <div className='
         absolute right-0 min-w-[240px] top-[-160px] h-[140px] bg-primary py-4 pt-2 config-panel
-        text-gray-200 overflow-y-scroll c-scrollbar overflow-x-hidden rounded-xl
+        text-white/80 overflow-y-scroll c-scrollbar overflow-x-hidden rounded-xl
         flex flex-col items-center justify-center'>
         
         <div className='px-4'>

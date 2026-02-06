@@ -66,20 +66,38 @@ body.leaflet-dragging .out-top{
 
 /* Estilos para la barra de scroll */
 .c-scrollbar::-webkit-scrollbar {
-  width: 6px; /* Ancho de la barra de scroll */
+  width: 6px;
 }
 
 .c-scrollbar::-webkit-scrollbar-track {
-  background:var(--primary); /* Color del fondo de la barra de scroll */
+  background: var(--primary);
 }
 
 .c-scrollbar::-webkit-scrollbar-thumb {
-  background: #888; /* Color del pulgar de la barra de scroll */
-  border-radius: 6px; /* Redondear el pulgar */
+  background: #888;
+  border-radius: 6px;
 }
 
 .c-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #555; /* Color del pulgar al pasar el mouse */
+  background: #555;
+}
+
+/* Custom scrollbar for search and drawer */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(147, 197, 253, 0.3);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(147, 197, 253, 0.5);
 }
 
 /* body.leaflet-draggin > div.out-bottom > nav > div.config-panel{

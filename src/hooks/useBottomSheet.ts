@@ -74,7 +74,8 @@ export const useBottomSheet = () => {
   const closeContent = () => {
     switch (contentType) {
       case 'route':
-        clearSelectedRoute();
+        // Solo cerrar el drawer, NO limpiar la ruta
+        setSheetState('peek');
         break;
       case 'nearbyRoutes':
         // Solo cerrar el drawer, NO limpiar las rutas
