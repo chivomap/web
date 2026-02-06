@@ -49,7 +49,7 @@ export const useRutasStore = create<RutasState>((set, get) => ({
     searchLocation: null,
     searchRadius: 1,
     isLoading: false,
-    showNearbyOnMap: false,
+    showNearbyOnMap: true, // Always show by default
     error: null,
 
     fetchAllRoutes: async () => {

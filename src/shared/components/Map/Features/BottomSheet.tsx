@@ -140,24 +140,8 @@ export const BottomSheet: React.FC = () => {
                       </button>
                     </div>
 
-                    {/* Toggle para mostrar rutas en mapa */}
-                    <div className="flex items-center justify-between p-2 bg-white/5 rounded-lg border border-white/10">
-                      <span className="text-xs text-white/70">Mostrar en mapa</span>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={useRutasStore.getState().showNearbyOnMap}
-                          onChange={(e) => {
-                            useRutasStore.getState().setShowNearbyOnMap(e.target.checked);
-                          }}
-                          className="sr-only peer"
-                        />
-                        <div className="w-9 h-5 bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-secondary"></div>
-                      </label>
-                    </div>
-
-                    {/* Control de Radio */}
-                    {useRutasStore.getState().searchLocation && (
+                    {/* Control de Radio - solo si no hay ruta seleccionada */}
+                    {!selectedRoute && useRutasStore.getState().searchLocation && (
                       <div className="flex items-center gap-2 text-xs">
                         <span className="text-white/60">Radio:</span>
                         <input

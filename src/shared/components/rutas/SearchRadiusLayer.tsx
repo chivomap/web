@@ -3,9 +3,10 @@ import { Source, Layer } from 'react-map-gl/maplibre';
 import { useRutasStore } from '../../store/rutasStore';
 
 export const SearchRadiusLayer: React.FC = () => {
-  const { searchLocation, searchRadius } = useRutasStore();
+  const { searchLocation, searchRadius, selectedRoute } = useRutasStore();
 
-  if (!searchLocation) return null;
+  // Hide radius when a specific route is selected
+  if (!searchLocation || selectedRoute) return null;
 
   // Crear círculo usando aproximación de polígono
   const createCircle = (center: { lat: number; lng: number }, radiusKm: number, points = 64) => {

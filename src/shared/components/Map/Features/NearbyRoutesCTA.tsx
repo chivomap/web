@@ -5,12 +5,13 @@ import { useMapStore } from '../../../store/mapStore';
 
 export const NearbyRoutesCTA: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const { fetchNearbyRoutes, nearbyRoutes } = useRutasStore();
+  const { fetchNearbyRoutes, nearbyRoutes, clearSelectedRoute } = useRutasStore();
   const { updateConfig } = useMapStore();
 
   const handleFindNearby = () => {
     if ('geolocation' in navigator) {
       setIsLoading(true);
+      clearSelectedRoute(); // Clear any selected route first
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
@@ -33,18 +34,18 @@ export const NearbyRoutesCTA: React.FC = () => {
     <button
       onClick={handleFindNearby}
       disabled={isLoading}
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+      className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-secondary/95 hover:bg-secondary backdrop-blur-sm border border-primary/30 text-primary px-5 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition-all hover:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed"
       style={{ zIndex: 50 }}
     >
       {isLoading ? (
         <>
-          <BiCurrentLocation className="text-xl animate-spin" />
-          <span className="font-medium">Buscando...</span>
+          <BiCurrentLocation className="text-lg animate-spin" />
+          <span className="text-sm font-medium">Buscando...</span>
         </>
       ) : (
         <>
-          <BiBus className="text-xl" />
-          <span className="font-medium">Rutas cercanas</span>
+          <BiBus className="text-lg" />
+          <span className="text-sm font-medium">Buscar rutas cercanas</span>
         </>
       )}
     </button>

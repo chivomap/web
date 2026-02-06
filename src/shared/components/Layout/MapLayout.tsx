@@ -5,6 +5,7 @@ import { useBottomSheetStore } from '../../store/bottomSheetStore';
 import { useBottomSheet } from '../../../hooks/useBottomSheet';
 import { BottomSheet } from '../Map/Features/BottomSheet';
 import { NearbyRoutesCTA } from '../Map/Features/NearbyRoutesCTA';
+import { useSearchStore } from '../../store/searchStore';
 
 const Map = lazy(() => import('../Map').then(m => ({ default: m.Map })));
 
@@ -20,6 +21,7 @@ const MapLoader = () => (
 export const MapLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { sheetState } = useBottomSheetStore();
   const { closeContent } = useBottomSheet();
+  const { showResults, inputValue, setShowResults } = useSearchStore();
 
   return (
     <>
@@ -56,6 +58,15 @@ export const MapLayout: React.FC<{ children: React.ReactNode }> = ({ children })
         <meta name="twitter:image:alt" content="Chivo Map | Mapa Interactivo de El Salvador" />
       </Helmet>
 
+
+      {/* Search backdrop */}
+      {showResults && inputValue && (
+        <div
+          className="fixed inset-0 bg-black/40"
+          style={{ zIndex: 59 }}
+          onClick={() => setShowResults(false)}
+        />
+      )}
 
       {/* Search */}
       <div className="fixed top-5 left-1/2 -translate-x-1/2 w-[90%] max-w-2xl" style={{ zIndex: 60 }}>

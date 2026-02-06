@@ -12,6 +12,7 @@ import { useLayoutStore } from '../../shared/store/layoutStore';
 import { useErrorStore } from '../../shared/store/errorStore';
 import { errorHandler } from '../../shared/errors/ErrorHandler';
 import { Z_INDEX } from '../../shared/constants/zIndex';
+import { useSearchStore } from '../../shared/store/searchStore';
 
 type SearchMode = 'routes' | 'places';
 
@@ -21,8 +22,7 @@ export const Search: React.FC = () => {
     municipios: [],
     distritos: []
   });
-  const [inputValue, setInputValue] = useState<string>('');
-  const [showResults, setShowResults] = useState<boolean>(false);
+  const { inputValue, showResults, setInputValue, setShowResults } = useSearchStore();
   const [mode, setMode] = useState<SearchMode>('routes');
   const [showModeSelector, setShowModeSelector] = useState<boolean>(false);
 
@@ -240,14 +240,6 @@ export const Search: React.FC = () => {
 
   return (
     <>
-      {showResults && inputValue && (
-        <div
-          className="fixed inset-0 bg-black/40"
-          style={{ zIndex: 15 }}
-          onClick={() => setShowResults(false)}
-        />
-      )}
-
       <form
         ref={searchContainerRef}
         onSubmit={(e) => e.preventDefault()}
