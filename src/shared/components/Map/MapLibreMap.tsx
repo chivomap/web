@@ -8,8 +8,8 @@ import { env } from '../../config/env';
 import { MapStyle } from '../../data/mapStyles';
 import { useThemeStore } from '../../store/themeStore';
 
-import { MapControls, MapMarker, PolygonDisplay, MapStyleSelector, MapScale, BottomSheet, GeoLayer, GeoDistritos } from './Features';
-import { RouteLayer } from '../rutas';
+import { MapControls, MapMarker, PolygonDisplay, MapStyleSelector, MapScale, GeoLayer, GeoDistritos } from './Features';
+import { RouteLayer, SearchRadiusLayer, NearbyRoutesLayer } from '../rutas';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './popup-styles.css';
 
@@ -18,11 +18,24 @@ export const MapLibreMap: React.FC = () => {
   const [clickPosition, setClickPosition] = useState<LngLat | null>(null);
   const [polygonCoords, setPolygonCoords] = useState<LngLat[]>([]);
   const [hoverInfo, setHoverInfo] = useState<{ name: string; x: number; y: number } | null>(null);
+  const [routeHover, setRouteHover] = useState<{ 
+    codigo: string; 
+    nombre: string; 
+    tipo: string;
+    subtipo: string;
+    sentido: string;
+    departamento: string;
+    kilometros: number;
+    distancia_m: number;
+    x: number; 
+    y: number;
+  } | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; lngLat: LngLat } | null>(null);
   const [isDrawingMode, setIsDrawingMode] = useState(false);
+  const [interactiveLayers, setInteractiveLayers] = useState<string[]>(['distritos-fill']);
   const { config, updateConfig } = useMapStore();
   const { addAnnotation, annotations } = useAnnotationStore();
-  const { fetchNearbyRoutes, selectedRoute } = useRutasStore();
+  const { fetchNearbyRoutes, selectedRoute, nearbyRoutes, showNearbyOnMap, selectRoute } = useRutasStore();
   const { currentMapStyle, setMapStyle } = useThemeStore();
   const { center, zoom } = config;
 
@@ -64,8 +77,45 @@ export const MapLibreMap: React.FC = () => {
   }, [selectedRoute]);
 
   const handleMapLoad = useCallback(() => {
+    if (mapRef.current) {
+      const map = mapRef.current.getMap();
+      
+      // Crear ícono de flecha SVG
+      const arrowSvg = `
+        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2 L12 18 M12 18 L6 12 M12 18 L18 12" 
+                stroke="white" 
+                stroke-width="3" 
+                fill="none" 
+                stroke-linecap="round" 
+                stroke-linejoin="round"/>
+        </svg>
+      `;
+      
+      const img = new Image(24, 24);
+      img.onload = () => {
+        if (!map.hasImage('arrow')) {
+          map.addImage('arrow', img);
+        }
+      };
+      img.src = 'data:image/svg+xml;base64,' + btoa(arrowSvg);
+    }
+    
     setMapReady(true);
   }, []);
+
+  // Update interactive layers when nearby routes change
+  useEffect(() => {
+    if (showNearbyOnMap && nearbyRoutes && nearbyRoutes.length > 0) {
+      const routeLayers = nearbyRoutes.flatMap(r => [
+        `nearby-route-hitbox-${r.codigo}`,
+        `nearby-route-line-${r.codigo}`
+      ]);
+      setInteractiveLayers(['distritos-fill', ...routeLayers]);
+    } else {
+      setInteractiveLayers(['distritos-fill']);
+    }
+  }, [showNearbyOnMap, nearbyRoutes]);
 
   const handleViewStateChange = useCallback((evt: ViewStateChangeEvent) => {
     updateConfig({
@@ -74,11 +124,38 @@ export const MapLibreMap: React.FC = () => {
     });
   }, [updateConfig]);
 
+  const [longPressTimer, setLongPressTimer] = React.useState<number | null>(null);
+  const [longPressTriggered, setLongPressTriggered] = React.useState(false);
+
   const handleMapClick = useCallback((event: any) => {
-    const { lngLat } = event;
+    // Si fue un long press, no hacer nada en el click
+    if (longPressTriggered) {
+      setLongPressTriggered(false);
+      return;
+    }
+
+    const { lngLat, features } = event;
+    
+    // Check if clicked on a nearby route (hitbox or line)
+    if (features && features.length > 0) {
+      const routeFeature = features.find((f: any) => 
+        f.layer?.id?.startsWith('nearby-route-hitbox-') || 
+        f.layer?.id?.startsWith('nearby-route-line-')
+      );
+      if (routeFeature) {
+        const codigo = routeFeature.layer.id
+          .replace('nearby-route-hitbox-', '')
+          .replace('nearby-route-line-', '');
+        
+        // Seleccionar ruta (en mobile solo actualiza contenido, en desktop abre panel)
+        selectRoute(codigo);
+        return;
+      }
+    }
+    
     setClickPosition(lngLat);
     // Solo agregar pin, sin abrir modal
-  }, []);
+  }, [nearbyRoutes, selectRoute, longPressTriggered]);
 
   const handleMapRightClick = useCallback((event: any) => {
     event.preventDefault();
@@ -90,6 +167,30 @@ export const MapLibreMap: React.FC = () => {
       setContextMenu({ x: point.x, y: point.y, lngLat });
     }
   }, [isDrawingMode]);
+
+  // Long press handlers for mobile
+  const handleTouchStart = useCallback((event: any) => {
+    const timer = setTimeout(() => {
+      const { lngLat, point } = event;
+      setLongPressTriggered(true);
+      setContextMenu({ x: point.x, y: point.y, lngLat });
+    }, 500); // 500ms para long press
+    setLongPressTimer(timer);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  }, [longPressTimer]);
+
+  const handleTouchMove = useCallback(() => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  }, [longPressTimer]);
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.key === 'Escape') {
@@ -154,8 +255,41 @@ export const MapLibreMap: React.FC = () => {
           handleMapClick(event);
         }}
         onMouseMove={(event) => {
+          // En mobile, no mostrar tooltips
+          const isMobile = window.innerWidth < 768;
+          
           if (event.features && event.features.length > 0) {
             const feature = event.features[0];
+            
+            // Check for nearby route hover (hitbox or line)
+            if (feature.layer?.id?.startsWith('nearby-route-hitbox-') || feature.layer?.id?.startsWith('nearby-route-line-')) {
+              const codigo = feature.layer.id
+                .replace('nearby-route-hitbox-', '')
+                .replace('nearby-route-line-', '');
+              const ruta = nearbyRoutes.find(r => r.codigo === codigo);
+              
+              if (ruta) {
+                event.target.getCanvas().style.cursor = 'pointer';
+                
+                // Solo mostrar tooltip en desktop
+                if (!isMobile) {
+                  setRouteHover({
+                    codigo: ruta.codigo,
+                    nombre: ruta.nombre,
+                    tipo: ruta.tipo,
+                    subtipo: ruta.subtipo,
+                    sentido: ruta.sentido,
+                    departamento: ruta.departamento,
+                    kilometros: ruta.kilometros,
+                    distancia_m: ruta.distancia_m,
+                    x: event.point.x,
+                    y: event.point.y
+                  });
+                }
+                return;
+              }
+            }
+            
             if (feature.source === 'distritos-source') {
               event.target.getCanvas().style.cursor = 'pointer';
 
@@ -187,6 +321,7 @@ export const MapLibreMap: React.FC = () => {
           } else {
             event.target.getCanvas().style.cursor = '';
             setHoverInfo(null);
+            setRouteHover(null);
             // Limpiar todos los hovers
             try {
               event.target.queryRenderedFeatures().forEach((f: any) => {
@@ -203,11 +338,14 @@ export const MapLibreMap: React.FC = () => {
           }
         }}
         onContextMenu={handleMapRightClick}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchMove={handleTouchMove}
         maxBounds={[
           [-91.00994252677712, 11.214449814812207], // Southwest
           [-85.6233130419287, 17.838768214469866]   // Northeast
         ]}
-        interactiveLayerIds={['distritos-fill']}
+        interactiveLayerIds={interactiveLayers}
         attributionControl={false}
       >
         <MapStyleSelector
@@ -219,8 +357,9 @@ export const MapLibreMap: React.FC = () => {
           <>
             <GeoLayer />
             <GeoDistritos />
+            <SearchRadiusLayer />
+            <NearbyRoutesLayer />
             <RouteLayer />
-            <BottomSheet />
             {clickPosition && <MapMarker position={clickPosition} />}
             {/* Renderizar pins de anotaciones */}
             {annotations.filter(a => a.type === 'pin' && a.data?.coordinates).map(annotation => (
@@ -241,64 +380,108 @@ export const MapLibreMap: React.FC = () => {
             onClick={() => setContextMenu(null)}
           />
           <div
-            className="fixed z-[71] bg-primary/95 backdrop-blur-sm text-white rounded-lg shadow-xl border border-white/20 py-1 min-w-[200px]"
+            className="fixed z-[71] bg-primary/95 backdrop-blur-md rounded-xl shadow-2xl border border-white/10 py-2 min-w-[240px] overflow-hidden"
             style={{
               left: contextMenu.x,
               top: contextMenu.y
             }}
           >
-            <button
-              onClick={() => {
-                addAnnotation({
-                  type: 'pin',
-                  name: `Pin ${new Date().toLocaleTimeString('es-SV')}`,
-                  data: { coordinates: contextMenu.lngLat },
-                });
-                setContextMenu(null);
-              }}
-              className="w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-2"
-            >
-              📍 Agregar pin aquí
-            </button>
-            <button
-              onClick={() => {
-                updateConfig({ ...config, center: { lng: contextMenu.lngLat.lng, lat: contextMenu.lngLat.lat } });
-                setContextMenu(null);
-              }}
-              className="w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-2"
-            >
-              🎯 Centrar mapa aquí
-            </button>
-            <button
-              onClick={() => {
-                const coords = `${contextMenu.lngLat.lat.toFixed(6)}, ${contextMenu.lngLat.lng.toFixed(6)}`;
-                navigator.clipboard.writeText(coords);
-                setContextMenu(null);
-              }}
-              className="w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-2"
-            >
-              📋 Copiar coordenadas
-            </button>
-            <div className="border-t border-white/20 my-1" />
-            <button
-              onClick={() => {
-                setIsDrawingMode(true);
-                setPolygonCoords([contextMenu.lngLat]);
-                setContextMenu(null);
-              }}
-              className="w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-2"
-            >
-              ✏️ Empezar dibujo manual
-            </button>
-            <button
-              onClick={() => {
-                fetchNearbyRoutes(contextMenu.lngLat.lat, contextMenu.lngLat.lng, 1);
-                setContextMenu(null);
-              }}
-              className="w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-2"
-            >
-              🚌 Buscar rutas cercanas
-            </button>
+            {/* Header con coordenadas */}
+            <div className="px-4 py-2 border-b border-white/10">
+              <div className="text-xs font-medium text-white/60">Coordenadas</div>
+              <div className="text-xs font-mono text-white/80 mt-0.5">
+                {contextMenu.lngLat.lat.toFixed(6)}, {contextMenu.lngLat.lng.toFixed(6)}
+              </div>
+            </div>
+
+            {/* Opciones principales */}
+            <div className="py-1">
+              <button
+                onClick={() => {
+                  addAnnotation({
+                    type: 'pin',
+                    name: `Pin ${new Date().toLocaleTimeString('es-SV')}`,
+                    data: { coordinates: contextMenu.lngLat },
+                  });
+                  setContextMenu(null);
+                }}
+                className="w-full px-4 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm flex items-center gap-3 text-gray-700 dark:text-gray-200"
+              >
+                <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>
+                <div>
+                  <div className="font-medium">Agregar marcador</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Guardar esta ubicación</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => {
+                  fetchNearbyRoutes(contextMenu.lngLat.lat, contextMenu.lngLat.lng, 1);
+                  setContextMenu(null);
+                }}
+                className="w-full px-4 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm flex items-center gap-3 text-gray-700 dark:text-gray-200"
+              >
+                <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z"/>
+                </svg>
+                <div>
+                  <div className="font-medium">Buscar rutas cercanas</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Radio de 1 km</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => {
+                  setIsDrawingMode(true);
+                  setPolygonCoords([contextMenu.lngLat]);
+                  setContextMenu(null);
+                }}
+                className="w-full px-4 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm flex items-center gap-3 text-gray-700 dark:text-gray-200"
+              >
+                <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                <div>
+                  <div className="font-medium">Dibujar polígono</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Modo dibujo manual</div>
+                </div>
+              </button>
+            </div>
+
+            <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
+
+            {/* Opciones secundarias */}
+            <div className="py-1">
+              <button
+                onClick={() => {
+                  updateConfig({ ...config, center: { lng: contextMenu.lngLat.lng, lat: contextMenu.lngLat.lat } });
+                  setContextMenu(null);
+                }}
+                className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm flex items-center gap-3 text-gray-600 dark:text-gray-300"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Centrar mapa aquí</span>
+              </button>
+
+              <button
+                onClick={async () => {
+                  const coords = `${contextMenu.lngLat.lat.toFixed(6)}, ${contextMenu.lngLat.lng.toFixed(6)}`;
+                  await navigator.clipboard.writeText(coords);
+                  setContextMenu(null);
+                }}
+                className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm flex items-center gap-3 text-gray-600 dark:text-gray-300"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span>Copiar coordenadas</span>
+              </button>
+            </div>
           </div>
         </>
       )}
@@ -313,6 +496,47 @@ export const MapLibreMap: React.FC = () => {
           }}
         >
           {hoverInfo.name}
+        </div>
+      )}
+
+      {/* Route hover tooltip */}
+      {routeHover && (
+        <div
+          className="fixed z-50 bg-primary/95 backdrop-blur-sm text-white px-3 py-2.5 rounded-lg shadow-xl border border-white/20 pointer-events-none min-w-[220px]"
+          style={{
+            left: routeHover.x + 10,
+            top: routeHover.y + 10
+          }}
+        >
+          <div className="font-bold text-base mb-1 text-secondary">Ruta {routeHover.codigo}</div>
+          <div className="text-xs text-white/90 mb-2">{routeHover.nombre}</div>
+          <div className="space-y-0.5 text-xs">
+            <div className="flex justify-between gap-3">
+              <span className="text-white/70">Departamento:</span>
+              <span className="font-medium text-right">{routeHover.departamento}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-white/70">Tipo:</span>
+              <span className="font-medium text-right">{routeHover.tipo}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-white/70">Subtipo:</span>
+              <span className="font-medium text-right">{routeHover.subtipo}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-white/70">Sentido:</span>
+              <span className="font-medium text-right">{routeHover.sentido}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-white/70">Longitud ruta:</span>
+              <span className="font-medium text-right">{routeHover.kilometros?.toFixed(2) || '0.00'} km</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-white/70">Distancia:</span>
+              <span className="font-medium text-right">{routeHover.distancia_m < 1000 ? `${Math.round(routeHover.distancia_m)}m` : `${(routeHover.distancia_m / 1000).toFixed(2)}km`}</span>
+            </div>
+          </div>
+          <div className="text-[10px] text-white/50 mt-2 text-center">Click para ver detalles</div>
         </div>
       )}
 

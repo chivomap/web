@@ -1,7 +1,7 @@
 import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App.tsx'
-import { ErrorBoundary } from './shared/components/ErrorBoundary'
+import { ErrorBoundary } from './shared/components/ErrorBoundary/ErrorBoundary'
 import './index.css'
 
 // Remover splash screen cuando React carga

@@ -3,6 +3,7 @@ import { Route, Switch } from 'wouter';
 import { MapLayout } from './shared/components/';
 import { ErrorNotification } from './shared/components/ErrorNotification';
 import { ProjectInfo } from './shared/components/Map/Features/ProjectInfo';
+import { NetworkStatus } from './shared/components/NetworkStatus/NetworkStatus';
 import { useAnalytics } from './hooks/useAnalytics';
 
 import { About, Home, Export, Account } from './pages'
@@ -21,6 +22,7 @@ export const App: React.FC = () => {
         </Switch>
       </MapLayout>
       <ErrorNotification />
+      <NetworkStatus />
       <ProjectInfo />
     </>
   );

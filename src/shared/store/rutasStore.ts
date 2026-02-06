@@ -25,7 +25,7 @@ interface RutasState {
 
     // UI State
     isLoading: boolean;
-    isPanelOpen: boolean;
+    showNearbyOnMap: boolean;
     error: string | null;
 
     // Actions
@@ -36,7 +36,7 @@ interface RutasState {
     clearNearbyRoutes: () => void;
     fetchMetadata: () => Promise<void>;
     setRadius: (radius: number) => void;
-    togglePanel: () => void;
+    setShowNearbyOnMap: (show: boolean) => void;
     setError: (error: string | null) => void;
 }
 
@@ -49,7 +49,7 @@ export const useRutasStore = create<RutasState>((set, get) => ({
     searchLocation: null,
     searchRadius: 1,
     isLoading: false,
-    isPanelOpen: false,
+    showNearbyOnMap: true, // Always show by default
     error: null,
 
     fetchAllRoutes: async () => {
@@ -77,7 +77,6 @@ export const useRutasStore = create<RutasState>((set, get) => ({
             set({
                 nearbyRoutes: response.routes,
                 searchRadius: response.radius_km,
-                isPanelOpen: response.routes.length > 0,
                 isLoading: false
             });
         } catch {
@@ -110,8 +109,7 @@ export const useRutasStore = create<RutasState>((set, get) => ({
     clearNearbyRoutes: () => {
         set({
             nearbyRoutes: [],
-            searchLocation: null,
-            isPanelOpen: false
+            searchLocation: null
         });
     },
 
@@ -124,8 +122,8 @@ export const useRutasStore = create<RutasState>((set, get) => ({
         set({ searchRadius: Math.min(Math.max(radius, 0.5), 10) });
     },
 
-    togglePanel: () => {
-        set(state => ({ isPanelOpen: !state.isPanelOpen }));
+    setShowNearbyOnMap: (show: boolean) => {
+        set({ showNearbyOnMap: show });
     },
 
     setError: (error: string | null) => {

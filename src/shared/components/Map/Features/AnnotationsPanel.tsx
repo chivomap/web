@@ -99,9 +99,9 @@ export const AnnotationsPanel: React.FC = () => {
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'pin': return <BiPin className="text-red-500" />;
-      case 'drawn-polygon': return <BiShapePolygon className="text-blue-500" />;
-      case 'search-result': return <BiMap className="text-green-500" />;
+      case 'pin': return <BiPin className="text-secondary" />;
+      case 'drawn-polygon': return <BiShapePolygon className="text-secondary" />;
+      case 'search-result': return <BiMap className="text-secondary" />;
       default: return null;
     }
   };

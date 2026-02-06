@@ -12,6 +12,15 @@ import type {
 const API_BASE = `${env.API_URL}/rutas`;
 
 /**
+ * Check network status before making request
+ */
+const checkNetwork = () => {
+    if (!navigator.onLine) {
+        throw createNetworkError('No hay conexión a internet');
+    }
+};
+
+/**
  * Obtiene rutas cercanas a una ubicación
  */
 export const getNearbyRoutes = async (
@@ -20,6 +29,8 @@ export const getNearbyRoutes = async (
     radius: number = 1
 ): Promise<NearbyResponse> => {
     try {
+        checkNetwork();
+        
         const url = `${API_BASE}/nearby?lat=${lat}&lng=${lng}&radius=${radius}`;
 
         if (isDevelopment && env.ENABLE_CONSOLE_LOGS) {
@@ -67,6 +78,8 @@ export const getNearbyRoutes = async (
  */
 export const searchRoutes = async (query: string): Promise<SearchResponse> => {
     try {
+        checkNetwork();
+        
         const url = `${API_BASE}/search?q=${encodeURIComponent(query)}`;
 
         const controller = new AbortController();
@@ -97,34 +110,102 @@ export const searchRoutes = async (query: string): Promise<SearchResponse> => {
 /**
  * Obtiene una ruta específica con geometría completa
  */
-export const getRouteByCode = async (codigo: string): Promise<RutaFeature | null> => {
-    try {
-        const url = `${API_BASE}/${encodeURIComponent(codigo)}`;
+export const getRouteByCode = async (
+    codigo: string, 
+    retries = 2, 
+    delay = 500
+): Promise<RutaFeature | null> => {
+    checkNetwork();
+    
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            const url = `${API_BASE}/${encodeURIComponent(codigo)}`;
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), env.API_TIMEOUT);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), env.API_TIMEOUT);
 
-        const response = await fetch(url, {
-            method: 'GET',
-            signal: controller.signal,
-            headers: { 'Accept': 'application/json' },
-        });
+            const response = await fetch(url, {
+                method: 'GET',
+                signal: controller.signal,
+                headers: { 'Accept': 'application/json' },
+            });
 
-        clearTimeout(timeoutId);
+            clearTimeout(timeoutId);
 
-        if (!response.ok) {
-            if (response.status === 404) return null;
-            throw createNetworkError(
-                `HTTP ${response.status}: ${response.statusText}`,
-                `HTTP_${response.status}`
-            );
+            if (response.status === 429 && attempt < retries) {
+                await new Promise(resolve => setTimeout(resolve, delay * (attempt + 1)));
+                continue;
+            }
+
+            if (!response.ok) {
+                if (response.status === 404) return null;
+                throw createNetworkError(
+                    `HTTP ${response.status}: ${response.statusText}`,
+                    `HTTP_${response.status}`
+                );
+            }
+
+            return await response.json();
+        } catch (error) {
+            if (attempt === retries) {
+                errorHandler.handle(error);
+                return null;
+            }
         }
-
-        return await response.json();
-    } catch (error) {
-        errorHandler.handle(error);
-        return null;
     }
+    return null;
+};
+
+/**
+ * Obtiene múltiples rutas en una sola petición con retry automático
+ */
+export const getRoutesBatch = async (
+    codes: string[], 
+    retries = 3, 
+    delay = 1000
+): Promise<Record<string, RutaFeature>> => {
+    checkNetwork();
+    
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            const url = `${API_BASE}/batch`;
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), env.API_TIMEOUT);
+
+            const response = await fetch(url, {
+                method: 'POST',
+                signal: controller.signal,
+                headers: { 
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(codes),
+            });
+
+            clearTimeout(timeoutId);
+
+            if (response.status === 429 && attempt < retries) {
+                await new Promise(resolve => setTimeout(resolve, delay * (attempt + 1)));
+                continue;
+            }
+
+            if (!response.ok) {
+                throw createNetworkError(
+                    `HTTP ${response.status}: ${response.statusText}`,
+                    `HTTP_${response.status}`
+                );
+            }
+
+            return await response.json();
+        } catch (error) {
+            if (attempt === retries) {
+                errorHandler.handle(error);
+                return {};
+            }
+        }
+    }
+    return {};
 };
 
 /**
