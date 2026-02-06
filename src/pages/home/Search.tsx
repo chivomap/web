@@ -243,7 +243,7 @@ export const Search: React.FC = () => {
       {showResults && inputValue && (
         <div
           className="fixed inset-0 bg-black/40"
-          style={{ zIndex: Z_INDEX.SEARCH_BACKDROP }}
+          style={{ zIndex: 15 }}
           onClick={() => setShowResults(false)}
         />
       )}
@@ -251,11 +251,10 @@ export const Search: React.FC = () => {
       <form
         ref={searchContainerRef}
         onSubmit={(e) => e.preventDefault()}
-        className="absolute w-full h-min flex flex-col items-center top-0 left-0"
-        style={{ zIndex: Z_INDEX.SEARCH_INPUT }}
+        className="w-full"
       >
         {search && (
-          <div className="w-[90%] max-w-lg relative flex flex-col gap-2">
+          <div className="w-full relative flex flex-col gap-2">
 
             <div className="relative w-full group">
               <div className={`

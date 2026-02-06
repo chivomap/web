@@ -64,6 +64,17 @@ export const NearbyRoutesLayer: React.FC = () => {
             type="geojson"
             data={fullRoute}
           >
+            {/* Capa invisible más ancha para interacción */}
+            <Layer
+              id={`nearby-route-hitbox-${ruta.codigo}`}
+              type="line"
+              paint={{
+                'line-color': color,
+                'line-width': 12,
+                'line-opacity': 0,
+              }}
+            />
+            {/* Capa visual */}
             <Layer
               id={`nearby-route-line-${ruta.codigo}`}
               type="line"

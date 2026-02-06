@@ -41,22 +41,21 @@ export const BottomSheet: React.FC = () => {
     if (!isDragging) return;
     const currentY = e.touches[0].clientY;
     const diff = currentY - dragStartY;
-    // Solo permitir drag hacia abajo desde full/half, o hacia arriba desde peek/half
-    if ((sheetState === 'full' && diff > 0) ||
-      (sheetState === 'half' && diff !== 0) ||
-      (sheetState === 'peek' && diff < 0)) {
-      setDragY(diff);
-    }
+    setDragY(diff);
   };
 
   const handleTouchEnd = () => {
     setIsDragging(false);
 
-    if (dragY > 100) {
+    const threshold = 80;
+    
+    if (dragY > threshold) {
+      // Arrastrar hacia abajo
       if (sheetState === 'full') setSheetState('half');
       else if (sheetState === 'half') setSheetState('peek');
-      else closeContent(); // Cerrar solo contenido actual
-    } else if (dragY < -100) {
+      else closeContent();
+    } else if (dragY < -threshold) {
+      // Arrastrar hacia arriba
       if (sheetState === 'peek') setSheetState('half');
       else if (sheetState === 'half') setSheetState('full');
     }
@@ -69,15 +68,6 @@ export const BottomSheet: React.FC = () => {
 
   return (
     <>
-      {/* Backdrop */}
-      {sheetState !== 'peek' && (
-        <div
-          className="sm:hidden fixed inset-0 bg-black/40"
-          style={{ zIndex: Z_INDEX.BOTTOM_SHEET_BACKDROP }}
-          onClick={closeContent} // Cerrar solo contenido actual
-        />
-      )}
-
       {/* Sheet */}
       <div
         className="fixed inset-x-0 bottom-0 sm:absolute sm:top-20 sm:bottom-auto sm:left-4 w-full sm:w-80 sm:max-h-[calc(100vh-6rem)]"
@@ -413,7 +403,7 @@ export const BottomSheet: React.FC = () => {
                                       properties: { name: annotation.name },
                                       geometry: {
                                         type: 'Polygon',
-                                        coordinates: [coords.map((c: any) => [c.lng, c.lat])]
+                                        coordinates: [coords.filter(c => c != null).map(c => [c!.lng, c!.lat])]
                                       }
                                     }]
                                   };

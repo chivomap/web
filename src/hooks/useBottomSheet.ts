@@ -47,12 +47,18 @@ export const useBottomSheet = () => {
     // Si cambió el tipo de contenido (no solo abrió/cerró)
     if (prevType !== contentType && contentType !== 'none') {
       // Solo auto-ajustar si usuario no ha tocado el estado manualmente
-      if (!userAdjustedRef.current) {
+      // Y solo si NO es un cambio dentro del mismo contexto (nearbyRoutes -> route)
+      const isSameContext = (prevType === 'nearbyRoutes' && contentType === 'route') ||
+                            (prevType === 'route' && contentType === 'nearbyRoutes');
+      
+      if (!userAdjustedRef.current && !isSameContext) {
         const initialState = getInitialState(contentType);
         setSheetState(initialState);
       }
-      // Resetear flag cuando cambia el contenido
-      userAdjustedRef.current = false;
+      // Resetear flag cuando cambia el contenido (excepto en mismo contexto)
+      if (!isSameContext) {
+        userAdjustedRef.current = false;
+      }
     }
     
     // Si se cerró todo, resetear
@@ -69,13 +75,10 @@ export const useBottomSheet = () => {
     switch (contentType) {
       case 'route':
         clearSelectedRoute();
-        // NO cambiar a rutas cercanas automáticamente
-        // Si hay rutas cercanas, ya se mostrarán por prioridad
         break;
       case 'nearbyRoutes':
-        clearNearbyRoutes();
-        // NO cambiar a ruta si existe
-        // Si hay ruta, ya se mostrará por prioridad
+        // Solo cerrar el drawer, NO limpiar las rutas
+        setSheetState('peek');
         break;
       case 'geoInfo':
         setSelectedInfo(null);

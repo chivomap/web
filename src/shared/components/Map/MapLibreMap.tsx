@@ -8,7 +8,7 @@ import { env } from '../../config/env';
 import { MapStyle } from '../../data/mapStyles';
 import { useThemeStore } from '../../store/themeStore';
 
-import { MapControls, MapMarker, PolygonDisplay, MapStyleSelector, MapScale, BottomSheet, GeoLayer, GeoDistritos } from './Features';
+import { MapControls, MapMarker, PolygonDisplay, MapStyleSelector, MapScale, GeoLayer, GeoDistritos } from './Features';
 import { RouteLayer, SearchRadiusLayer, NearbyRoutesLayer } from '../rutas';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './popup-styles.css';
@@ -107,7 +107,10 @@ export const MapLibreMap: React.FC = () => {
   // Update interactive layers when nearby routes change
   useEffect(() => {
     if (showNearbyOnMap && nearbyRoutes.length > 0) {
-      const routeLayers = nearbyRoutes.map(r => `nearby-route-line-${r.codigo}`);
+      const routeLayers = nearbyRoutes.flatMap(r => [
+        `nearby-route-hitbox-${r.codigo}`,
+        `nearby-route-line-${r.codigo}`
+      ]);
       setInteractiveLayers(['distritos-fill', ...routeLayers]);
     } else {
       setInteractiveLayers(['distritos-fill']);
@@ -124,11 +127,18 @@ export const MapLibreMap: React.FC = () => {
   const handleMapClick = useCallback((event: any) => {
     const { lngLat, features } = event;
     
-    // Check if clicked on a nearby route
+    // Check if clicked on a nearby route (hitbox or line)
     if (features && features.length > 0) {
-      const routeFeature = features.find((f: any) => f.layer?.id?.startsWith('nearby-route-line-'));
+      const routeFeature = features.find((f: any) => 
+        f.layer?.id?.startsWith('nearby-route-hitbox-') || 
+        f.layer?.id?.startsWith('nearby-route-line-')
+      );
       if (routeFeature) {
-        const codigo = routeFeature.layer.id.replace('nearby-route-line-', '');
+        const codigo = routeFeature.layer.id
+          .replace('nearby-route-hitbox-', '')
+          .replace('nearby-route-line-', '');
+        
+        // Seleccionar ruta (en mobile solo actualiza contenido, en desktop abre panel)
         selectRoute(codigo);
         return;
       }
@@ -212,28 +222,37 @@ export const MapLibreMap: React.FC = () => {
           handleMapClick(event);
         }}
         onMouseMove={(event) => {
+          // En mobile, no mostrar tooltips
+          const isMobile = window.innerWidth < 768;
+          
           if (event.features && event.features.length > 0) {
             const feature = event.features[0];
             
-            // Check for nearby route hover
-            if (feature.layer?.id?.startsWith('nearby-route-line-')) {
-              const codigo = feature.layer.id.replace('nearby-route-line-', '');
+            // Check for nearby route hover (hitbox or line)
+            if (feature.layer?.id?.startsWith('nearby-route-hitbox-') || feature.layer?.id?.startsWith('nearby-route-line-')) {
+              const codigo = feature.layer.id
+                .replace('nearby-route-hitbox-', '')
+                .replace('nearby-route-line-', '');
               const ruta = nearbyRoutes.find(r => r.codigo === codigo);
               
               if (ruta) {
                 event.target.getCanvas().style.cursor = 'pointer';
-                setRouteHover({
-                  codigo: ruta.codigo,
-                  nombre: ruta.nombre,
-                  tipo: ruta.tipo,
-                  subtipo: ruta.subtipo,
-                  sentido: ruta.sentido,
-                  departamento: ruta.departamento,
-                  kilometros: ruta.kilometros,
-                  distancia_m: ruta.distancia_m,
-                  x: event.point.x,
-                  y: event.point.y
-                });
+                
+                // Solo mostrar tooltip en desktop
+                if (!isMobile) {
+                  setRouteHover({
+                    codigo: ruta.codigo,
+                    nombre: ruta.nombre,
+                    tipo: ruta.tipo,
+                    subtipo: ruta.subtipo,
+                    sentido: ruta.sentido,
+                    departamento: ruta.departamento,
+                    kilometros: ruta.kilometros,
+                    distancia_m: ruta.distancia_m,
+                    x: event.point.x,
+                    y: event.point.y
+                  });
+                }
                 return;
               }
             }
@@ -305,7 +324,6 @@ export const MapLibreMap: React.FC = () => {
             <SearchRadiusLayer />
             <NearbyRoutesLayer />
             <RouteLayer />
-            <BottomSheet />
             {clickPosition && <MapMarker position={clickPosition} />}
             {/* Renderizar pins de anotaciones */}
             {annotations.filter(a => a.type === 'pin' && a.data?.coordinates).map(annotation => (
@@ -326,64 +344,108 @@ export const MapLibreMap: React.FC = () => {
             onClick={() => setContextMenu(null)}
           />
           <div
-            className="fixed z-[71] bg-primary/95 backdrop-blur-sm text-white rounded-lg shadow-xl border border-white/20 py-1 min-w-[200px]"
+            className="fixed z-[71] bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-2 min-w-[240px] overflow-hidden"
             style={{
               left: contextMenu.x,
               top: contextMenu.y
             }}
           >
-            <button
-              onClick={() => {
-                addAnnotation({
-                  type: 'pin',
-                  name: `Pin ${new Date().toLocaleTimeString('es-SV')}`,
-                  data: { coordinates: contextMenu.lngLat },
-                });
-                setContextMenu(null);
-              }}
-              className="w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-2"
-            >
-              📍 Agregar pin aquí
-            </button>
-            <button
-              onClick={() => {
-                updateConfig({ ...config, center: { lng: contextMenu.lngLat.lng, lat: contextMenu.lngLat.lat } });
-                setContextMenu(null);
-              }}
-              className="w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-2"
-            >
-              🎯 Centrar mapa aquí
-            </button>
-            <button
-              onClick={() => {
-                const coords = `${contextMenu.lngLat.lat.toFixed(6)}, ${contextMenu.lngLat.lng.toFixed(6)}`;
-                navigator.clipboard.writeText(coords);
-                setContextMenu(null);
-              }}
-              className="w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-2"
-            >
-              📋 Copiar coordenadas
-            </button>
-            <div className="border-t border-white/20 my-1" />
-            <button
-              onClick={() => {
-                setIsDrawingMode(true);
-                setPolygonCoords([contextMenu.lngLat]);
-                setContextMenu(null);
-              }}
-              className="w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-2"
-            >
-              ✏️ Empezar dibujo manual
-            </button>
-            <button
-              onClick={() => {
-                fetchNearbyRoutes(contextMenu.lngLat.lat, contextMenu.lngLat.lng, 1);
-                setContextMenu(null);
-              }}
-              className="w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-2"
-            >
-              🚌 Buscar rutas cercanas
-            </button>
+            {/* Header con coordenadas */}
+            <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+              <div className="text-xs font-medium text-gray-500 dark:text-gray-400">Coordenadas</div>
+              <div className="text-xs font-mono text-gray-700 dark:text-gray-300 mt-0.5">
+                {contextMenu.lngLat.lat.toFixed(6)}, {contextMenu.lngLat.lng.toFixed(6)}
+              </div>
+            </div>
+
+            {/* Opciones principales */}
+            <div className="py-1">
+              <button
+                onClick={() => {
+                  addAnnotation({
+                    type: 'pin',
+                    name: `Pin ${new Date().toLocaleTimeString('es-SV')}`,
+                    data: { coordinates: contextMenu.lngLat },
+                  });
+                  setContextMenu(null);
+                }}
+                className="w-full px-4 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm flex items-center gap-3 text-gray-700 dark:text-gray-200"
+              >
+                <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>
+                <div>
+                  <div className="font-medium">Agregar marcador</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Guardar esta ubicación</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => {
+                  fetchNearbyRoutes(contextMenu.lngLat.lat, contextMenu.lngLat.lng, 1);
+                  setContextMenu(null);
+                }}
+                className="w-full px-4 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm flex items-center gap-3 text-gray-700 dark:text-gray-200"
+              >
+                <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z"/>
+                </svg>
+                <div>
+                  <div className="font-medium">Buscar rutas cercanas</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Radio de 1 km</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => {
+                  setIsDrawingMode(true);
+                  setPolygonCoords([contextMenu.lngLat]);
+                  setContextMenu(null);
+                }}
+                className="w-full px-4 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm flex items-center gap-3 text-gray-700 dark:text-gray-200"
+              >
+                <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                <div>
+                  <div className="font-medium">Dibujar polígono</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Modo dibujo manual</div>
+                </div>
+              </button>
+            </div>
+
+            <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
+
+            {/* Opciones secundarias */}
+            <div className="py-1">
+              <button
+                onClick={() => {
+                  updateConfig({ ...config, center: { lng: contextMenu.lngLat.lng, lat: contextMenu.lngLat.lat } });
+                  setContextMenu(null);
+                }}
+                className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm flex items-center gap-3 text-gray-600 dark:text-gray-300"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Centrar mapa aquí</span>
+              </button>
+
+              <button
+                onClick={async () => {
+                  const coords = `${contextMenu.lngLat.lat.toFixed(6)}, ${contextMenu.lngLat.lng.toFixed(6)}`;
+                  await navigator.clipboard.writeText(coords);
+                  setContextMenu(null);
+                }}
+                className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm flex items-center gap-3 text-gray-600 dark:text-gray-300"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span>Copiar coordenadas</span>
+              </button>
+            </div>
           </div>
         </>
       )}
