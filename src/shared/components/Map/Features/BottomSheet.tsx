@@ -1,26 +1,24 @@
 import React from 'react';
-import { useMapStore } from '../../../store/mapStore';
+import { useBottomSheet } from '../../../../hooks/useBottomSheet';
 import { useAnnotationStore } from '../../../store/annotationStore';
-import { useBottomSheetStore } from '../../../store/bottomSheetStore';
 import { useRutasStore } from '../../../store/rutasStore';
-import { RUTA_COLORS, type SubtipoRuta } from '../../../types/rutas';
+import { useMapStore } from '../../../store/mapStore';
+import { useBottomSheetStore } from '../../../store/bottomSheetStore';
 import { BiMap, BiBookmark, BiTrash, BiPin, BiShapePolygon, BiDownload, BiBus, BiRuler, BiRightArrowAlt, BiX, BiLoaderAlt } from 'react-icons/bi';
 import { MdOutlinePolyline } from 'react-icons/md';
 import { Z_INDEX } from '../../../constants/zIndex';
+import { RouteCodeBadge } from '../../rutas/RouteCodeBadge';
 
 export const BottomSheet: React.FC = () => {
-  const { selectedInfo, currentLevel, parentInfo, setCurrentLevel, setParentInfo, setDepartamentoGeojson } = useMapStore();
+  const { isOpen, sheetState, setSheetState, closeContent } = useBottomSheet();
+  const { activeTab, setActiveTab } = useBottomSheetStore();
   const { annotations, removeAnnotation } = useAnnotationStore();
-  const { activeTab, sheetState, setActiveTab, setSheetState } = useBottomSheetStore();
-  const { selectedRoute, clearSelectedRoute, nearbyRoutes, clearNearbyRoutes, selectRoute } = useRutasStore();
+  const { selectedRoute, nearbyRoutes, selectRoute } = useRutasStore();
+  const { selectedInfo, currentLevel, parentInfo, setCurrentLevel, setParentInfo } = useMapStore();
 
   const [dragY, setDragY] = React.useState(0);
   const [isDragging, setIsDragging] = React.useState(false);
   const [radiusDebounce, setRadiusDebounce] = React.useState<ReturnType<typeof setTimeout> | null>(null);
-
-  // Está abierto si hay alguna info, ruta seleccionada, o rutas cercanas
-  const isOpen = !!(selectedInfo || annotations.length > 0 || selectedRoute || nearbyRoutes.length > 0);
-
   const [dragStartY, setDragStartY] = React.useState(0);
 
   const getSheetHeight = () => {
@@ -43,22 +41,21 @@ export const BottomSheet: React.FC = () => {
     if (!isDragging) return;
     const currentY = e.touches[0].clientY;
     const diff = currentY - dragStartY;
-    // Solo permitir drag hacia abajo desde full/half, o hacia arriba desde peek/half
-    if ((sheetState === 'full' && diff > 0) ||
-      (sheetState === 'half' && diff !== 0) ||
-      (sheetState === 'peek' && diff < 0)) {
-      setDragY(diff);
-    }
+    setDragY(diff);
   };
 
   const handleTouchEnd = () => {
     setIsDragging(false);
 
-    if (dragY > 100) {
+    const threshold = 80;
+    
+    if (dragY > threshold) {
+      // Arrastrar hacia abajo
       if (sheetState === 'full') setSheetState('half');
       else if (sheetState === 'half') setSheetState('peek');
-      else handleClose();
-    } else if (dragY < -100) {
+      else closeContent();
+    } else if (dragY < -threshold) {
+      // Arrastrar hacia arriba
       if (sheetState === 'peek') setSheetState('half');
       else if (sheetState === 'half') setSheetState('full');
     }
@@ -67,34 +64,10 @@ export const BottomSheet: React.FC = () => {
     setDragStartY(0);
   };
 
-  const handleClose = () => {
-    useMapStore.getState().setSelectedInfo(null);
-    useMapStore.getState().updateGeojson(null);
-    setCurrentLevel('departamento');
-    setParentInfo(null);
-    setDepartamentoGeojson(null);
-
-    // Limpiar ruta y rutas cercanas
-    clearSelectedRoute();
-    clearNearbyRoutes();
-    
-    // Limpiar timeout si existe
-    if (radiusDebounce) clearTimeout(radiusDebounce);
-  };
-
   if (!isOpen) return null;
 
   return (
     <>
-      {/* Backdrop */}
-      {sheetState !== 'peek' && (
-        <div
-          className="sm:hidden fixed inset-0 bg-black/40"
-          style={{ zIndex: Z_INDEX.BOTTOM_SHEET_BACKDROP }}
-          onClick={() => setSheetState('peek')}
-        />
-      )}
-
       {/* Sheet */}
       <div
         className="fixed inset-x-0 bottom-0 sm:absolute sm:top-20 sm:bottom-auto sm:left-4 w-full sm:w-80 sm:max-h-[calc(100vh-6rem)]"
@@ -130,8 +103,8 @@ export const BottomSheet: React.FC = () => {
                 : 'text-white/60 hover:text-white/80'
                 }`}
             >
-              {selectedRoute ? <BiBus className="inline mr-2" /> : nearbyRoutes.length > 0 ? <BiBus className="inline mr-2" /> : <BiMap className="inline mr-2" />}
-              {selectedRoute ? 'Ruta' : nearbyRoutes.length > 0 ? `Rutas (${nearbyRoutes.length})` : 'Información'}
+              {selectedRoute ? <BiBus className="inline mr-2" /> : (nearbyRoutes && nearbyRoutes.length > 0) ? <BiBus className="inline mr-2" /> : <BiMap className="inline mr-2" />}
+              {selectedRoute ? 'Ruta' : (nearbyRoutes && nearbyRoutes.length > 0) ? `Rutas (${nearbyRoutes.length})` : 'Información'}
             </button>
             <button
               onClick={() => setActiveTab('annotations')}
@@ -146,29 +119,36 @@ export const BottomSheet: React.FC = () => {
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
             {activeTab === 'info' ? (
               // Vista de Información (Ruta, Rutas Cercanas o Lugar)
               <div className="p-4 space-y-3">
 
                 {/* 1. RUTAS CERCANAS */}
-                {nearbyRoutes.length > 0 && !selectedRoute ? (
+                {(useRutasStore.getState().searchLocation || (nearbyRoutes && nearbyRoutes.length > 0)) && !selectedRoute ? (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-bold text-white text-lg">Rutas cercanas</h3>
-                        <p className="text-xs text-white/50">{nearbyRoutes.length} {nearbyRoutes.length === 1 ? 'ruta encontrada' : 'rutas encontradas'}</p>
+                        <p className="text-xs text-white/50">
+                          {nearbyRoutes && nearbyRoutes.length > 0 
+                            ? `${nearbyRoutes.length} ${nearbyRoutes.length === 1 ? 'ruta encontrada' : 'rutas encontradas'}`
+                            : 'No se encontraron rutas en esta área'
+                          }
+                        </p>
                       </div>
                       <button
-                        onClick={clearNearbyRoutes}
+                        onClick={() => {
+                          useRutasStore.getState().clearNearbyRoutes();
+                        }}
                         className="text-xs text-white/60 hover:text-white px-3 py-1.5 hover:bg-white/10 rounded-lg transition-colors"
                       >
                         Limpiar
                       </button>
                     </div>
 
-                    {/* Control de Radio */}
-                    {useRutasStore.getState().searchLocation && (
+                    {/* Control de Radio - solo si no hay ruta seleccionada */}
+                    {!selectedRoute && useRutasStore.getState().searchLocation && (
                       <div className="flex items-center gap-2 text-xs">
                         <span className="text-white/60">Radio:</span>
                         <input
@@ -205,30 +185,30 @@ export const BottomSheet: React.FC = () => {
                       </div>
                     )}
 
-                    <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-secondary/30 scrollbar-track-white/5 hover:scrollbar-thumb-secondary/50">
-                      {nearbyRoutes.map((ruta) => {
-                        const subtipo = ruta.subtipo as SubtipoRuta;
-                        const color = RUTA_COLORS[subtipo] || '#6b7280';
-                        return (
-                          <button
-                            key={ruta.codigo}
-                            onClick={() => {
-                              selectRoute(ruta.codigo);
-                              setSheetState('peek'); // Compactar drawer al seleccionar ruta
+                    {nearbyRoutes && nearbyRoutes.length > 0 && (
+                      <div className="space-y-2 pr-2">
+                        {nearbyRoutes.map((ruta) => {
+                          return (
+                            <button
+                              key={ruta.codigo}
+                              onClick={() => {
+                                selectRoute(ruta.codigo);
+                                // Mantener en half para ver info completa
                             }}
                             className="w-full text-left p-2.5 bg-white/5 hover:bg-secondary/10 rounded-lg border border-white/10 hover:border-secondary/30 transition-all group"
                           >
                             <div className="flex items-center gap-2.5">
-                              <div
-                                className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold shadow-lg flex-shrink-0 group-hover:scale-105 transition-transform"
-                                style={{ backgroundColor: color }}
-                              >
-                                {ruta.nombre}
-                              </div>
+                              <RouteCodeBadge 
+                                code={ruta.nombre} 
+                                subtipo={ruta.subtipo}
+                              />
                               <div className="flex-1 min-w-0">
                                 <p className="font-semibold text-white text-sm group-hover:text-secondary transition-colors">Ruta {ruta.nombre}</p>
-                                <div className="flex items-center gap-2 mt-0.5">
+                                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                   <span className="text-xs text-white/50 truncate">{ruta.subtipo}</span>
+                                  {ruta.departamento && (
+                                    <span className="text-xs text-white/40">• {ruta.departamento}</span>
+                                  )}
                                   <span className="text-xs text-secondary font-medium">
                                     {ruta.distancia_m < 1000 ? `${Math.round(ruta.distancia_m)}m` : `${(ruta.distancia_m / 1000).toFixed(1)}km`}
                                   </span>
@@ -238,27 +218,23 @@ export const BottomSheet: React.FC = () => {
                           </button>
                         );
                       })}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 ) :
                   /* 2. INFORMACIÓN DE RUTA */
                   selectedRoute ? (
                   (() => {
                     const props = selectedRoute.properties;
-                    const subtipo = props.SUBTIPO as SubtipoRuta;
-                    const color = RUTA_COLORS[subtipo] || '#6b7280';
-
                     return (
                       <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                         {/* Header with color accent */}
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-3">
-                            <div
-                              className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg font-bold shadow-lg"
-                              style={{ backgroundColor: color }}
-                            >
-                              {props.Nombre_de_}
-                            </div>
+                            <RouteCodeBadge 
+                              code={props.Nombre_de_} 
+                              subtipo={props.SUBTIPO}
+                            />
                             <div className="flex-1 min-w-0">
                               <h3 className="font-bold text-lg leading-tight text-white truncate">
                                 Ruta {props.Nombre_de_}
@@ -269,9 +245,11 @@ export const BottomSheet: React.FC = () => {
                             </div>
                           </div>
                           <button
-                            onClick={clearSelectedRoute}
+                            onClick={() => {
+                              useRutasStore.getState().clearSelectedRoute();
+                            }}
                             className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white"
-                            title="Cerrar Ruta"
+                            title="Volver al listado"
                           >
                             <BiX className="text-2xl" />
                           </button>
@@ -414,7 +392,7 @@ export const BottomSheet: React.FC = () => {
                                       properties: { name: annotation.name },
                                       geometry: {
                                         type: 'Polygon',
-                                        coordinates: [coords.map((c: any) => [c.lng, c.lat])]
+                                        coordinates: [coords.filter(c => c != null).map(c => [c!.lng, c!.lat])]
                                       }
                                     }]
                                   };

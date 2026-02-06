@@ -18,7 +18,7 @@ export const ProjectInfo: React.FC = () => {
       {/* Info Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-2 right-2 sm:bottom-4 sm:right-4 z-50 w-6 h-6 bg-primary/90 hover:bg-primary rounded-full flex items-center justify-center transition-colors shadow-lg"
+        className="hidden sm:flex fixed bottom-2 right-2 sm:bottom-4 sm:right-4 z-50 w-6 h-6 bg-primary/90 hover:bg-primary rounded-full items-center justify-center transition-colors shadow-lg"
         title="Información del proyecto"
       >
         <BiInfoCircle className="text-secondary text-sm" />

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Source, Layer } from 'react-map-gl/maplibre';
 import { useRutasStore } from '../../store/rutasStore';
 import { RUTA_COLORS, type SubtipoRuta } from '../../types/rutas';
-import type { LineLayerSpecification } from 'maplibre-gl';
+import type { LineLayerSpecification, SymbolLayerSpecification } from 'maplibre-gl';
 
 export const RouteLayer = () => {
     const { selectedRoute } = useRutasStore();
@@ -51,10 +51,30 @@ export const RouteLayer = () => {
         },
     };
 
+    const arrowStyle: SymbolLayerSpecification = {
+        id: 'selected-route-arrows',
+        type: 'symbol',
+        source: 'selected-route',
+        layout: {
+            'symbol-placement': 'line',
+            'symbol-spacing': 100,
+            'icon-image': 'arrow',
+            'icon-size': 0.5,
+            'icon-rotate': 90,
+            'icon-rotation-alignment': 'map',
+            'icon-allow-overlap': true,
+            'icon-ignore-placement': true,
+        },
+        paint: {
+            'icon-opacity': 0.8,
+        },
+    };
+
     return (
         <Source id="selected-route" type="geojson" data={geojsonData}>
             <Layer {...lineOutlineStyle} />
             <Layer {...lineStyle} />
+            <Layer {...arrowStyle} />
         </Source>
     );
 };

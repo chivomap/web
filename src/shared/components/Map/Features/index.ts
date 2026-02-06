@@ -1,5 +1,6 @@
 export { MapControls } from './MapControls';
 export { MapMarker } from './MapMarker';
+export { NearbyRoutesCTA } from './NearbyRoutesCTA';
 export { PolygonDisplay } from './PolygonDisplay';
 export { GeoDistritos } from './GeoDistritos';
 export { MapStyleSelector } from './MapStyleSelector';

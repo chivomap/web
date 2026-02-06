@@ -4,9 +4,8 @@ import { LngLat } from 'maplibre-gl';
 import { BiPlus, BiMinus, BiFullscreen, BiExitFullscreen, BiCurrentLocation } from 'react-icons/bi';
 import { MdMyLocation, MdNearMe, MdAddLocation, MdContentCopy, MdDirectionsBus } from 'react-icons/md';
 import { useAnnotationStore } from '../../../store/annotationStore';
-import { useRutasStore } from '../../../store/rutasStore';
+import { useBottomSheet } from '../../../../hooks/useBottomSheet';
 import { useMapStore } from '../../../store/mapStore';
-import { useBottomSheetStore } from '../../../store/bottomSheetStore';
 
 export const MapControls: React.FC = () => {
   const { current: map } = useMap();
@@ -15,9 +14,8 @@ export const MapControls: React.FC = () => {
   const [userLocation, setUserLocation] = React.useState<{ lat: number; lng: number } | null>(null);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const { addAnnotation } = useAnnotationStore();
-  const { fetchNearbyRoutes } = useRutasStore();
+  const { openNearbyRoutes } = useBottomSheet();
   const { updateConfig, config } = useMapStore();
-  const { setActiveTab, setSheetState } = useBottomSheetStore();
 
   const zoomIn = () => {
     if (map) map.zoomIn();
@@ -80,9 +78,7 @@ export const MapControls: React.FC = () => {
             center: { lat: latitude, lng: longitude }, 
             zoom: 14 // Zoom apropiado para ver ~1km de radio
           });
-          fetchNearbyRoutes(latitude, longitude, 1);
-          setActiveTab('info');
-          setSheetState('half');
+          openNearbyRoutes(latitude, longitude, 1);
         },
         (error) => {
           console.error('Error obteniendo ubicación:', error);
@@ -189,9 +185,7 @@ export const MapControls: React.FC = () => {
             
             <button
               onClick={() => {
-                fetchNearbyRoutes(userLocation.lat, userLocation.lng, 1);
-                setActiveTab('info');
-                setSheetState('half');
+                openNearbyRoutes(userLocation.lat, userLocation.lng, 1);
                 setShowLocationMenu(false);
               }}
               className="w-full px-3 py-2.5 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-3 text-white"

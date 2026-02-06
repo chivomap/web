@@ -1,6 +1,11 @@
 import React, { lazy, Suspense } from 'react';
 import { Helmet } from "react-helmet";
 import { LayerModal } from '../index';
+import { useBottomSheetStore } from '../../store/bottomSheetStore';
+import { useBottomSheet } from '../../../hooks/useBottomSheet';
+import { BottomSheet } from '../Map/Features/BottomSheet';
+import { NearbyRoutesCTA } from '../Map/Features/NearbyRoutesCTA';
+import { useSearchStore } from '../../store/searchStore';
 
 const Map = lazy(() => import('../Map').then(m => ({ default: m.Map })));
 
@@ -14,6 +19,10 @@ const MapLoader = () => (
 );
 
 export const MapLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { sheetState } = useBottomSheetStore();
+  const { closeContent } = useBottomSheet();
+  const { showResults, inputValue, setShowResults } = useSearchStore();
+
   return (
     <>
       {/* Mapa con lazy loading */}
@@ -50,15 +59,37 @@ export const MapLayout: React.FC<{ children: React.ReactNode }> = ({ children })
       </Helmet>
 
 
-      {/* Contenido principal */}
-      <section className="w-full max-w-2xl mx-auto text-gray-200 z-50 fixed left-1/2 transform -translate-x-1/2 top-[20px]">
-        <article className="bg-primary w-11/12 rounded mx-auto">
-          {children}
-        </article>
-      </section>
+      {/* Search backdrop */}
+      {showResults && inputValue && (
+        <div
+          className="fixed inset-0 bg-black/40"
+          style={{ zIndex: 59 }}
+          onClick={() => setShowResults(false)}
+        />
+      )}
+
+      {/* Search */}
+      <div className="fixed top-5 left-1/2 -translate-x-1/2 w-[90%] max-w-2xl" style={{ zIndex: 60 }}>
+        {children}
+      </div>
+
+      {/* Backdrop del drawer - al mismo nivel que search */}
+      {sheetState !== 'peek' && (
+        <div
+          className="sm:hidden fixed inset-0 bg-black/40"
+          style={{ zIndex: 55 }}
+          onClick={closeContent}
+        />
+      )}
+
+      {/* Drawer - al mismo nivel que backdrop */}
+      <BottomSheet />
+
+      {/* CTA for nearby routes */}
+      <NearbyRoutesCTA />
 
       {/* Espacio vacío reservado para otro contenido */}
-      <div className="z-50 w-[100px] h-[100px] fixed bottom-[100px] right-2 opacity-80 md:right-4 md:bottom-4 md:w-[120px] md:h-[120px]">
+      <div className="w-[100px] h-[100px] fixed bottom-[100px] right-2 opacity-80 md:right-4 md:bottom-4 md:w-[120px] md:h-[120px]" style={{ zIndex: 10 }}>
         {/* Contenido adicional opcional */}
       </div>
 

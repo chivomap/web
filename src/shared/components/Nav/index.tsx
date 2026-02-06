@@ -28,7 +28,7 @@ export const Nav = () => {
             </>
           )}
 
-          <div className='flex flex-1 items-center justify-center text-center mx-auto px-4 pt-2 w-full text-gray-200 group-hover:text-secondary'>
+          <div className='flex flex-1 items-center justify-center text-center mx-auto px-4 pt-2 w-full text-white/60 group-hover:text-secondary'>
             <span className="px-1 pt-1 pb-1 flex flex-col items-center cursor-pointer" onClick={togglePanel}>
               <Settings className='text-[2rem] pt-1 mb-1' />
               <span className="block text-xs pb-2">Config</span>
