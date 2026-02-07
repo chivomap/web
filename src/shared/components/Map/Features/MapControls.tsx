@@ -77,7 +77,7 @@ export const MapControls: React.FC = () => {
             center: { lat: latitude, lng: longitude }, 
             zoom: 14 // Zoom apropiado para ver ~1km de radio
           });
-          openNearbyRoutes(latitude, longitude, 1);
+          openNearbyRoutes(latitude, longitude, 0.5);
         },
         (error) => {
           console.error('Error obteniendo ubicación:', error);
@@ -184,7 +184,7 @@ export const MapControls: React.FC = () => {
             
             <button
               onClick={() => {
-                openNearbyRoutes(userLocation.lat, userLocation.lng, 1);
+                openNearbyRoutes(userLocation.lat, userLocation.lng, 0.5);
                 setShowLocationMenu(false);
               }}
               className="w-full px-3 py-2.5 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-3 text-white"

@@ -18,6 +18,8 @@ interface RutasState {
     nearbyRoutes: RutaNearby[];
     selectedRoute: RutaFeature | null;
     metadata: RutasMetadataResponse | null;
+    hoveredRoute: string | null;
+    overlappingRoutes: string[] | null;
 
     // Location
     searchLocation: { lat: number; lng: number } | null;
@@ -38,6 +40,8 @@ interface RutasState {
     setRadius: (radius: number) => void;
     setShowNearbyOnMap: (show: boolean) => void;
     setError: (error: string | null) => void;
+    setHoveredRoute: (codigo: string | null) => void;
+    setOverlappingRoutes: (routes: string[] | null) => void;
 }
 
 export const useRutasStore = create<RutasState>((set, get) => ({
@@ -46,8 +50,10 @@ export const useRutasStore = create<RutasState>((set, get) => ({
     nearbyRoutes: [],
     selectedRoute: null,
     metadata: null,
+    hoveredRoute: null,
+    overlappingRoutes: null,
     searchLocation: null,
-    searchRadius: 1,
+    searchRadius: 0.5,
     isLoading: false,
     showNearbyOnMap: true, // Always show by default
     error: null,
@@ -128,5 +134,13 @@ export const useRutasStore = create<RutasState>((set, get) => ({
 
     setError: (error: string | null) => {
         set({ error });
+    },
+
+    setHoveredRoute: (codigo: string | null) => {
+        set({ hoveredRoute: codigo });
+    },
+
+    setOverlappingRoutes: (routes: string[] | null) => {
+        set({ overlappingRoutes: routes });
     },
 }));
