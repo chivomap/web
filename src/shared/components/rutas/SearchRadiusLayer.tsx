@@ -59,31 +59,6 @@ export const SearchRadiusLayer: React.FC = () => {
           }}
         />
       </Source>
-
-      {/* Marcador del centro */}
-      <Source
-        id="search-center"
-        type="geojson"
-        data={{
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'Point',
-            coordinates: [searchLocation.lng, searchLocation.lat],
-          },
-        }}
-      >
-        <Layer
-          id="search-center-circle"
-          type="circle"
-          paint={{
-            'circle-radius': 8,
-            'circle-color': '#93c5fd',
-            'circle-stroke-width': 2,
-            'circle-stroke-color': '#ffffff',
-          }}
-        />
-      </Source>
     </>
   );
 };

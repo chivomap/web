@@ -35,6 +35,8 @@ export const MapLibreMap: React.FC = () => {
   } | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; lngLat: LngLat } | null>(null);
   const [interactiveLayers, setInteractiveLayers] = useState<string[]>(['distritos-fill']);
+  const [longPressTimer, setLongPressTimer] = useState<number | null>(null);
+  
   const { config, updateConfig } = useMapStore();
   const { pin, setPin } = usePinStore();
   const { selectedRoute, nearbyRoutes, showNearbyOnMap, selectRoute, setHoveredRoute, setOverlappingRoutes } = useRutasStore();
@@ -165,23 +167,6 @@ export const MapLibreMap: React.FC = () => {
     
     setContextMenu({ x: point.x, y: point.y, lngLat });
   }, []);
-
-  const handlePinClick = useCallback(() => {
-    if (pin) {
-      const coords = `${pin.lat.toFixed(6)}, ${pin.lng.toFixed(6)}`;
-      navigator.clipboard.writeText(coords);
-      
-      // Mostrar notificación temporal
-      const notification = document.createElement('div');
-      notification.textContent = '📋 Coordenadas copiadas';
-      notification.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-secondary text-primary px-4 py-2 rounded-lg shadow-lg z-50 animate-fade-in';
-      document.body.appendChild(notification);
-      
-      setTimeout(() => {
-        notification.remove();
-      }, 2000);
-    }
-  }, [pin]);
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.key === 'Escape') {
@@ -389,9 +374,41 @@ export const MapLibreMap: React.FC = () => {
           }
         }}
         onContextMenu={handleMapRightClick}
+        onTouchStart={(e) => {
+          // Solo en móvil
+          if (window.innerWidth >= 640) return;
+          
+          const lngLat = e.lngLat;
+          
+          const timer = window.setTimeout(() => {
+            // Long press detectado - agregar pin
+            setPin(new LngLat(lngLat.lng, lngLat.lat));
+            
+            // Vibración si está disponible
+            if (navigator.vibrate) {
+              navigator.vibrate(50);
+            }
+          }, 500); // 500ms para long press
+          
+          setLongPressTimer(timer);
+        }}
+        onTouchEnd={() => {
+          // Cancelar long press si se suelta antes de tiempo
+          if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            setLongPressTimer(null);
+          }
+        }}
+        onTouchMove={() => {
+          // Cancelar long press si se mueve el dedo
+          if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            setLongPressTimer(null);
+          }
+        }}
         maxBounds={[
           [-91.00994252677712, 11.214449814812207], // Southwest
-          [-85.6233130419287, 17.838768214469866]   // Northeast
+          [-85.6233130419287, 17.838768214869866]   // Northeast
         ]}
         interactiveLayerIds={interactiveLayers}
         attributionControl={false}
@@ -410,7 +427,9 @@ export const MapLibreMap: React.FC = () => {
             <ParadasLayer />
             <RouteLayer />
             <UserLocationMarker />
-            {pin && <MapMarker position={pin} onClick={handlePinClick} />}
+            {pin && (
+              <MapMarker position={pin} />
+            )}
           </>
         )}
       </Map>
@@ -452,8 +471,8 @@ export const MapLibreMap: React.FC = () => {
 
               <button
                 onClick={() => {
+                  setPin(contextMenu.lngLat); // Agregar pin
                   openNearbyRoutes(contextMenu.lngLat.lat, contextMenu.lngLat.lng, 0.5);
-                  fetchNearbyParadas(contextMenu.lngLat.lat, contextMenu.lngLat.lng, 0.5);
                   updateConfig({ ...config, center: { lat: contextMenu.lngLat.lat, lng: contextMenu.lngLat.lng }, zoom: 14 });
                   setContextMenu(null);
                 }}
