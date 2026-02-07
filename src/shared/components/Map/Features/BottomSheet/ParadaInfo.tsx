@@ -17,13 +17,21 @@ export const ParadaInfo: React.FC<ParadaInfoProps> = ({ parada }) => {
   // Encontrar todas las rutas que pasan por esta parada (mismo nombre)
   const rutasEnParada = nearbyParadas
     .filter(p => p.nombre === parada.nombre)
-    .map(p => ({ ruta: p.ruta, codigo: p.codigo, parada: p }))
+    .map(p => {
+      const rutaInfo = nearbyRoutes.find(r => r.codigo === p.ruta);
+      return { 
+        ruta: p.ruta, 
+        nombre: rutaInfo?.nombre || p.ruta,
+        codigo: p.codigo, 
+        parada: p 
+      };
+    })
     .reduce((acc, curr) => {
       if (!acc.find(r => r.ruta === curr.ruta && r.codigo === curr.codigo)) {
         acc.push(curr);
       }
       return acc;
-    }, [] as { ruta: string; codigo: string; parada: Parada }[])
+    }, [] as { ruta: string; nombre: string; codigo: string; parada: Parada }[])
     .sort((a, b) => {
       // Ordenar por distancia si hay nearbyRoutes
       const routeA = nearbyRoutes.find(r => r.codigo === a.ruta);
@@ -56,9 +64,10 @@ export const ParadaInfo: React.FC<ParadaInfoProps> = ({ parada }) => {
         </div>
         <button
           onClick={() => setSelectedParada(null)}
-          className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
+          className="p-1.5 hover:bg-red-500/10 rounded-lg transition-colors text-red-400 hover:text-red-300"
+          title="Cerrar"
         >
-          <BiX className="text-white text-xl" />
+          <BiX className="text-2xl" />
         </button>
       </div>
 
@@ -89,7 +98,7 @@ export const ParadaInfo: React.FC<ParadaInfoProps> = ({ parada }) => {
               >
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-white text-sm group-hover:text-secondary transition-colors">
-                    Ruta {r.ruta}
+                    Ruta {r.nombre}
                   </span>
                   <span className="text-xs text-white/50">
                     {r.codigo === 'I' ? 'Ida' : 'Regreso'}

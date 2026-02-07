@@ -1,24 +1,40 @@
 import React from 'react';
 import { useParadasStore } from '../../../../store/paradasStore';
+import { useRutasStore } from '../../../../store/rutasStore';
 import type { Parada } from '../../../../types/paradas';
 
 export const NearbyParadasList: React.FC = () => {
-  const { nearbyParadas, searchLocation, isLoading, setSelectedParada } = useParadasStore();
+  const { nearbyParadas, searchLocation, isLoading, setSelectedParada, clearNearbyParadas } = useParadasStore();
+  const searchRadius = useRutasStore(state => state.searchRadius);
 
-  if (!searchLocation && nearbyParadas.length === 0) return null;
+  if (!searchLocation && (!nearbyParadas || nearbyParadas.length === 0)) return null;
+
+  const paradasCount = nearbyParadas?.length || 0;
 
   return (
-    <div className="p-4 space-y-3 border-t border-white/10">
+    <div className="p-4 space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-bold text-white text-base">Paradas cercanas</h3>
+          <h3 className="font-bold text-white text-lg">Paradas cercanas</h3>
           <p className="text-xs text-white/50">
-            {nearbyParadas.length > 0
-              ? `${nearbyParadas.length} ${nearbyParadas.length === 1 ? 'parada encontrada' : 'paradas encontradas'}`
+            {paradasCount > 0
+              ? `${paradasCount} ${paradasCount === 1 ? 'parada encontrada' : 'paradas encontradas'}`
               : 'No se encontraron paradas en esta área'}
           </p>
         </div>
+        <button
+          onClick={clearNearbyParadas}
+          className="text-xs text-red-400 hover:text-red-300 px-3 py-1.5 hover:bg-red-500/10 rounded-lg transition-colors font-medium"
+        >
+          Limpiar
+        </button>
       </div>
+
+      {searchLocation && (
+        <div className="text-xs text-white/60">
+          Radio de búsqueda: <span className="text-white font-medium">{searchRadius.toFixed(1)} km</span>
+        </div>
+      )}
 
       {isLoading && (
         <div className="text-center py-4 text-white/60">
@@ -26,7 +42,7 @@ export const NearbyParadasList: React.FC = () => {
         </div>
       )}
 
-      {nearbyParadas.length > 0 && (
+      {nearbyParadas && nearbyParadas.length > 0 && (
         <div className="space-y-2 pr-1 max-h-[300px] sm:max-h-[400px] overflow-y-auto custom-scrollbar">
           {nearbyParadas.map((parada) => (
             <ParadaCard key={parada.fid} parada={parada} onSelect={setSelectedParada} />

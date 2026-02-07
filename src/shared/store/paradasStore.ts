@@ -39,17 +39,26 @@ export const useParadasStore = create<ParadasState>((set, get) => ({
   error: null,
 
   fetchNearbyParadas: async (lat: number, lng: number, radius?: number) => {
+    const startTime = Date.now();
+    console.log(`[${new Date().toISOString()}] 🔄 fetchNearbyParadas started`);
+    
     const r = radius ?? get().searchRadius;
     set({ isLoading: true, error: null, searchLocation: { lat, lng } });
 
     try {
+      console.log(`[${new Date().toISOString()}] 📞 Calling API getNearbyParadas...`);
       const response = await getNearbyParadas(lat, lng, r);
+      const apiTime = Date.now();
+      console.log(`[${new Date().toISOString()}] ✅ API response received (took ${apiTime - startTime}ms):`, response.paradas.length, 'paradas');
+      
       set({
         nearbyParadas: response.paradas,
         searchRadius: response.radius_km,
         isLoading: false,
       });
+      console.log(`[${new Date().toISOString()}] ✅ Store updated (total: ${Date.now() - startTime}ms)`);
     } catch (error) {
+      console.error(`[${new Date().toISOString()}] ❌ fetchNearbyParadas error (took ${Date.now() - startTime}ms):`, error);
       set({
         error: 'Error al buscar paradas cercanas',
         isLoading: false,

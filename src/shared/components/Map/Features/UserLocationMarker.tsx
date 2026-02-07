@@ -3,42 +3,50 @@ import { Marker } from 'react-map-gl/maplibre';
 
 export const UserLocationMarker: React.FC = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [watchId, setWatchId] = useState<number | null>(null);
 
   useEffect(() => {
-    // Obtener ubicación inicial
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        },
-        (error) => {
-          console.log('Location not available:', error);
+    console.log('🌐 App loaded - checking geolocation permissions...');
+    // Solo iniciar watch si el usuario ya dio permisos
+    if (navigator.geolocation && navigator.permissions) {
+      navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+        console.log('🔐 Geolocation permission status:', result.state);
+        if (result.state === 'granted') {
+          console.log('✅ Permission granted - starting location watch...');
+          // Ya tiene permisos, iniciar watch
+          const id = navigator.geolocation.watchPosition(
+            (position) => {
+              const location = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+              };
+              console.log('📍 User location updated:', location);
+              setUserLocation(location);
+            },
+            (error) => {
+              console.error('❌ Location watch error:', error);
+            },
+            {
+              enableHighAccuracy: false,
+              maximumAge: 30000,
+              timeout: 10000
+            }
+          );
+          setWatchId(id);
+        } else {
+          console.log('⚠️ No geolocation permission - user marker will not show until permission granted');
         }
-      );
-
-      // Actualizar ubicación cada 30 segundos
-      const watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        },
-        (error) => {
-          console.log('Location watch error:', error);
-        },
-        {
-          enableHighAccuracy: false,
-          maximumAge: 30000,
-          timeout: 10000
-        }
-      );
-
-      return () => navigator.geolocation.clearWatch(watchId);
+      });
+    } else {
+      console.log('❌ Geolocation or Permissions API not supported');
     }
+
+    return () => {
+      if (watchId !== null) {
+        console.log('🛑 Stopping location watch');
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
   }, []);
 
   if (!userLocation) return null;

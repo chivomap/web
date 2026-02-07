@@ -2,9 +2,7 @@ import React from 'react';
 import { useLocation, useRoute } from 'wouter';
 
 export const LayerModal: React.FC = () => {
-  const [location, setLocation] = useLocation();
-
-  console.log('location', location);
+  const [, setLocation] = useLocation();
 
   // Check if the current path is the home path
   const isHome = useRoute('/')[0];

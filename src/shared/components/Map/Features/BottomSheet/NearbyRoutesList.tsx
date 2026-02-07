@@ -108,7 +108,7 @@ export const NearbyRoutesList: React.FC = React.memo(() => {
         </div>
         <button
           onClick={clearNearbyRoutes}
-          className="text-xs text-white/60 hover:text-white px-3 py-1.5 hover:bg-white/10 rounded-lg transition-colors"
+          className="text-xs text-red-400 hover:text-red-300 px-3 py-1.5 hover:bg-red-500/10 rounded-lg transition-colors font-medium"
         >
           Limpiar
         </button>
