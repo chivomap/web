@@ -73,11 +73,11 @@ export const MapLayout: React.FC<{ children: React.ReactNode }> = ({ children })
         {children}
       </div>
 
-      {/* Backdrop del drawer - al mismo nivel que search */}
+      {/* Backdrop del drawer - debe estar sobre el search */}
       {sheetState !== 'peek' && (
         <div
           className="sm:hidden fixed inset-0 bg-black/40"
-          style={{ zIndex: 55 }}
+          style={{ zIndex: 65 }}
           onClick={closeContent}
         />
       )}
