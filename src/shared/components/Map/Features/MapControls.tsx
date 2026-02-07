@@ -158,17 +158,6 @@ export const MapControls: React.FC = () => {
           <BiCurrentLocation className="text-secondary text-xl sm:text-xl mx-auto" />
         </button>
 
-      {/* Clear Pin Button */}
-      {pin && (
-        <button
-          onClick={clearPin}
-          className="w-10 h-10 sm:w-10 sm:h-10 bg-primary shadow-lg rounded-lg hover:bg-primary/80 transition-colors touch-manipulation border-2 border-red-500/50"
-          title="Quitar pin"
-        >
-          <BiX className="text-red-500 text-2xl sm:text-2xl mx-auto" />
-        </button>
-      )}
-
         {/* Location Menu */}
         {showLocationMenu && userLocation && (
           <div 
@@ -218,6 +207,17 @@ export const MapControls: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Clear Pin Button */}
+      {pin && (
+        <button
+          onClick={clearPin}
+          className="w-10 h-10 sm:w-10 sm:h-10 bg-primary shadow-lg rounded-lg hover:bg-primary/80 transition-colors touch-manipulation border-2 border-red-500/50"
+          title="Quitar pin"
+        >
+          <BiX className="text-red-500 text-2xl sm:text-2xl mx-auto" />
+        </button>
+      )}
     </div>
   );
 };
