@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ChivoMap | El Salvador</title>
     
@@ -29,11 +29,22 @@
         background: #333;
         z-index: 9999;
       }
+      #splash img {
+        width: 200px;
+        height: 200px;
+        margin-bottom: 1rem;
+        animation: pulse 2s ease-in-out infinite;
+      }
       #splash h1 {
         font-size: 2.5rem;
         font-weight: 700;
         margin-bottom: 1rem;
         color: #93c5fd;
+        display: none;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.05); }
       }
       #splash p {
         font-size: 1rem;
@@ -63,6 +74,7 @@
   <body>
     <!-- Splash screen - se muestra inmediatamente -->
     <div id="splash">
+      <img src="/logo.svg" alt="ChivoMap Logo" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" />
       <h1>ChivoMap</h1>
       <p>Cargando mapa de El Salvador...</p>
       <div class="loader"></div>

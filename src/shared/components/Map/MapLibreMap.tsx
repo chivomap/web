@@ -2,21 +2,19 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import Map, { ViewStateChangeEvent, MapRef } from 'react-map-gl/maplibre';
 import { LngLat, LngLatBounds } from 'maplibre-gl';
 import { useMapStore } from '../../../shared/store/mapStore';
-// import { useAnnotationStore } from '../../store/annotationStore';
+import { usePinStore } from '../../store/pinStore';
 import { useRutasStore } from '../../store/rutasStore';
 import { env } from '../../config/env';
 import { MapStyle } from '../../data/mapStyles';
 import { useThemeStore } from '../../store/themeStore';
 
-import { MapControls, MapScale, MapStyleSelector, GeoLayer, GeoDistritos } from './Features';
-// import { MapControls, MapMarker, PolygonDisplay, MapStyleSelector, MapScale, GeoLayer, GeoDistritos } from './Features';
+import { MapControls, MapMarker, MapScale, MapStyleSelector, GeoLayer, GeoDistritos } from './Features';
 import { RouteLayer, SearchRadiusLayer, NearbyRoutesLayer } from '../rutas';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './popup-styles.css';
 
 export const MapLibreMap: React.FC = () => {
   const [mapReady, setMapReady] = useState<boolean>(false);
-  // const [clickPosition, setClickPosition] = useState<LngLat | null>(null);
   const [polygonCoords, setPolygonCoords] = useState<LngLat[]>([]);
   const [hoverInfo, setHoverInfo] = useState<{ name: string; x: number; y: number } | null>(null);
   const [routeHover, setRouteHover] = useState<{ 
@@ -32,11 +30,10 @@ export const MapLibreMap: React.FC = () => {
     y: number;
   } | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; lngLat: LngLat } | null>(null);
-  const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [interactiveLayers, setInteractiveLayers] = useState<string[]>(['distritos-fill']);
   const { config, updateConfig } = useMapStore();
-  // const { addAnnotation, annotations } = useAnnotationStore();
-  const { fetchNearbyRoutes, selectedRoute, nearbyRoutes, showNearbyOnMap, selectRoute } = useRutasStore();
+  const { pin, setPin } = usePinStore();
+  const { selectedRoute, nearbyRoutes, showNearbyOnMap, selectRoute } = useRutasStore();
   const { currentMapStyle, setMapStyle } = useThemeStore();
   const { center, zoom } = config;
 
@@ -154,21 +151,32 @@ export const MapLibreMap: React.FC = () => {
   const handleMapRightClick = useCallback((event: any) => {
     event.preventDefault();
     const { lngLat, point } = event;
+    
+    setContextMenu({ x: point.x, y: point.y, lngLat });
+  }, []);
 
-    if (isDrawingMode) {
-      setPolygonCoords((prevCoords) => [...prevCoords, lngLat]);
-    } else {
-      setContextMenu({ x: point.x, y: point.y, lngLat });
+  const handlePinClick = useCallback(() => {
+    if (pin) {
+      const coords = `${pin.lat.toFixed(6)}, ${pin.lng.toFixed(6)}`;
+      navigator.clipboard.writeText(coords);
+      
+      // Mostrar notificación temporal
+      const notification = document.createElement('div');
+      notification.textContent = '📋 Coordenadas copiadas';
+      notification.className = 'fixed top-20 left-1/2 -translate-x-1/2 bg-secondary text-primary px-4 py-2 rounded-lg shadow-lg z-50 animate-fade-in';
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.remove();
+      }, 2000);
     }
-  }, [isDrawingMode]);
+  }, [pin]);
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.key === 'Escape') {
-      setIsDrawingMode(false);
       setPolygonCoords([]);
       setContextMenu(null);
     } else if (event.key === 'Backspace' || event.key === 'Delete') {
-      // setClickPosition(null);
       setPolygonCoords([]);
     } else if (event.ctrlKey && event.key === 'z') {
       setPolygonCoords((prevCoords) => prevCoords.slice(0, -1));
@@ -329,19 +337,12 @@ export const MapLibreMap: React.FC = () => {
             <SearchRadiusLayer />
             <NearbyRoutesLayer />
             <RouteLayer />
-            {/* Comentado: funcionalidad de anotaciones */}
-            {/* {clickPosition && <MapMarker position={clickPosition} />} */}
-            {/* {annotations.filter(a => a.type === 'pin' && a.data?.coordinates).map(annotation => (
-              <MapMarker key={annotation.id} position={annotation.data.coordinates as LngLat} />
-            ))} */}
-            {/* {polygonCoords.length > 0 && (
-              <PolygonDisplay coordinates={polygonCoords} />
-            )} */}
+            {pin && <MapMarker position={pin} onClick={handlePinClick} />}
           </>
         )}
       </Map>
 
-      {/* Menú contextual */}
+      {/* Menú contextual simple */}
       {contextMenu && (
         <>
           <div
@@ -349,13 +350,12 @@ export const MapLibreMap: React.FC = () => {
             onClick={() => setContextMenu(null)}
           />
           <div
-            className="fixed z-[71] bg-primary/95 backdrop-blur-md rounded-xl shadow-2xl border border-white/10 py-2 min-w-[240px] overflow-hidden"
+            className="fixed z-[71] bg-primary/95 backdrop-blur-md rounded-xl shadow-2xl border border-white/10 py-2 min-w-[200px] overflow-hidden"
             style={{
               left: contextMenu.x,
               top: contextMenu.y
             }}
           >
-            {/* Header con coordenadas */}
             <div className="px-4 py-2 border-b border-white/10">
               <div className="text-xs font-medium text-white/60">Coordenadas</div>
               <div className="text-xs font-mono text-white/80 mt-0.5">
@@ -363,80 +363,18 @@ export const MapLibreMap: React.FC = () => {
               </div>
             </div>
 
-            {/* Opciones principales */}
             <div className="py-1">
-              {/* Comentado: funcionalidad de anotaciones */}
-              {/* <button
+              <button
                 onClick={() => {
-                  addAnnotation({
-                    type: 'pin',
-                    name: `Pin ${new Date().toLocaleTimeString('es-SV')}`,
-                    data: { coordinates: contextMenu.lngLat },
-                  });
+                  setPin(contextMenu.lngLat);
                   setContextMenu(null);
                 }}
-                className="w-full px-4 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm flex items-center gap-3 text-gray-700 dark:text-gray-200"
+                className="w-full px-4 py-2.5 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-3 text-white"
               >
-                <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>
-                <div>
-                  <div className="font-medium">Agregar marcador</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Guardar esta ubicación</div>
-                </div>
-              </button> */}
-
-              <button
-                onClick={() => {
-                  fetchNearbyRoutes(contextMenu.lngLat.lat, contextMenu.lngLat.lng, 1);
-                  setContextMenu(null);
-                }}
-                className="w-full px-4 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm flex items-center gap-3 text-gray-700 dark:text-gray-200"
-              >
-                <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z"/>
-                </svg>
-                <div>
-                  <div className="font-medium">Buscar rutas cercanas</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Radio de 1 km</div>
-                </div>
-              </button>
-
-              {/* Comentado: funcionalidad de dibujar polígonos */}
-              {/* <button
-                onClick={() => {
-                  setIsDrawingMode(true);
-                  setPolygonCoords([contextMenu.lngLat]);
-                  setContextMenu(null);
-                }}
-                className="w-full px-4 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm flex items-center gap-3 text-gray-700 dark:text-gray-200"
-              >
-                <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                </svg>
-                <div>
-                  <div className="font-medium">Dibujar polígono</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Modo dibujo manual</div>
-                </div>
-              </button> */}
-            </div>
-
-            <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
-
-            {/* Opciones secundarias */}
-            <div className="py-1">
-              <button
-                onClick={() => {
-                  updateConfig({ ...config, center: { lng: contextMenu.lngLat.lng, lat: contextMenu.lngLat.lat } });
-                  setContextMenu(null);
-                }}
-                className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm flex items-center gap-3 text-gray-600 dark:text-gray-300"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span>Centrar mapa aquí</span>
+                <span>Colocar pin aquí</span>
               </button>
 
               <button
@@ -445,9 +383,9 @@ export const MapLibreMap: React.FC = () => {
                   await navigator.clipboard.writeText(coords);
                   setContextMenu(null);
                 }}
-                className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm flex items-center gap-3 text-gray-600 dark:text-gray-300"
+                className="w-full px-4 py-2.5 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-3 text-white"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
                 <span>Copiar coordenadas</span>
@@ -510,18 +448,6 @@ export const MapLibreMap: React.FC = () => {
           <div className="text-[10px] text-white/50 mt-2 text-center">Click para ver detalles</div>
         </div>
       )}
-
-      {/* Indicador de modo dibujo */}
-      {isDrawingMode && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-purple-600/95 backdrop-blur-sm text-white px-4 py-2 rounded-lg shadow-xl border border-purple-400/30">
-          <div className="text-sm font-medium">✏️ Modo dibujo activo</div>
-          <div className="text-xs text-white/80 mt-1">
-            Click derecho: agregar punto • Enter: completar • Escape: cancelar
-          </div>
-        </div>
-      )}
-
-      {/* Transport Routes UI - Removed, now integrated in BottomSheet */}
     </div>
   );
 };
