@@ -97,10 +97,8 @@ export const useRutasStore = create<RutasState>((set, get) => ({
     selectRoute: async (codigo: string) => {
         set({ isLoading: true, error: null });
         
-        // Limpiar paradas de ruta anterior
+        // Limpiar solo paradas de ruta anterior, mantener nearbyParadas si existen
         useParadasStore.getState().clearParadasByRuta();
-        // Limpiar paradas cercanas también
-        useParadasStore.getState().clearNearbyParadas();
 
         try {
             const route = await getRouteByCode(codigo);

@@ -11,6 +11,7 @@ import { MapStyle } from '../../data/mapStyles';
 import { useThemeStore } from '../../store/themeStore';
 
 import { MapControls, MapMarker, MapScale, MapStyleSelector, GeoLayer, GeoDistritos } from './Features';
+import { UserLocationMarker } from './Features/UserLocationMarker';
 import { RouteLayer, SearchRadiusLayer, NearbyRoutesLayer } from '../rutas';
 import { ParadasLayer } from '../paradas/ParadasLayer';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -408,6 +409,7 @@ export const MapLibreMap: React.FC = () => {
             <NearbyRoutesLayer />
             <ParadasLayer />
             <RouteLayer />
+            <UserLocationMarker />
             {pin && <MapMarker position={pin} onClick={handlePinClick} />}
           </>
         )}

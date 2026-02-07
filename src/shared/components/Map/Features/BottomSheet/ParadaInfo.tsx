@@ -11,18 +11,29 @@ interface ParadaInfoProps {
 export const ParadaInfo: React.FC<ParadaInfoProps> = ({ parada }) => {
   const setSelectedParada = useParadasStore(state => state.setSelectedParada);
   const nearbyParadas = useParadasStore(state => state.nearbyParadas);
+  const nearbyRoutes = useRutasStore(state => state.nearbyRoutes);
   const selectRoute = useRutasStore(state => state.selectRoute);
 
   // Encontrar todas las rutas que pasan por esta parada (mismo nombre)
   const rutasEnParada = nearbyParadas
     .filter(p => p.nombre === parada.nombre)
-    .map(p => ({ ruta: p.ruta, codigo: p.codigo }))
+    .map(p => ({ ruta: p.ruta, codigo: p.codigo, parada: p }))
     .reduce((acc, curr) => {
       if (!acc.find(r => r.ruta === curr.ruta && r.codigo === curr.codigo)) {
         acc.push(curr);
       }
       return acc;
-    }, [] as { ruta: string; codigo: string }[]);
+    }, [] as { ruta: string; codigo: string; parada: Parada }[])
+    .sort((a, b) => {
+      // Ordenar por distancia si hay nearbyRoutes
+      const routeA = nearbyRoutes.find(r => r.codigo === a.ruta);
+      const routeB = nearbyRoutes.find(r => r.codigo === b.ruta);
+      
+      if (routeA && routeB) {
+        return routeA.distancia_m - routeB.distancia_m;
+      }
+      return 0;
+    });
 
   return (
     <div className="p-4 space-y-3">
