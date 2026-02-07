@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { BiBus, BiCurrentLocation } from 'react-icons/bi';
 import { useRutasStore } from '../../../store/rutasStore';
+import { useParadasStore } from '../../../store/paradasStore';
 import { useMapStore } from '../../../store/mapStore';
 
 export const NearbyRoutesCTA: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { fetchNearbyRoutes, nearbyRoutes, clearSelectedRoute } = useRutasStore();
+  const { fetchNearbyParadas } = useParadasStore();
   const { updateConfig } = useMapStore();
 
   const handleFindNearby = () => {
@@ -16,7 +18,10 @@ export const NearbyRoutesCTA: React.FC = () => {
         (position) => {
           const { latitude, longitude } = position.coords;
           updateConfig({ center: { lat: latitude, lng: longitude }, zoom: 14 });
-          fetchNearbyRoutes(latitude, longitude, 500).finally(() => setIsLoading(false));
+          Promise.all([
+            fetchNearbyRoutes(latitude, longitude, 0.5),
+            fetchNearbyParadas(latitude, longitude, 0.5)
+          ]).finally(() => setIsLoading(false));
         },
         (error) => {
           console.error('Location error:', error);

@@ -3,7 +3,7 @@ import { useParadasStore } from '../../../../store/paradasStore';
 import type { Parada } from '../../../../types/paradas';
 
 export const NearbyParadasList: React.FC = () => {
-  const { nearbyParadas, searchLocation, isLoading, clearNearbyParadas, setSelectedParada } = useParadasStore();
+  const { nearbyParadas, searchLocation, isLoading, setSelectedParada } = useParadasStore();
 
   if (!searchLocation && nearbyParadas.length === 0) return null;
 
@@ -18,12 +18,6 @@ export const NearbyParadasList: React.FC = () => {
               : 'No se encontraron paradas en esta área'}
           </p>
         </div>
-        <button
-          onClick={clearNearbyParadas}
-          className="text-xs text-white/60 hover:text-white px-3 py-1.5 hover:bg-white/10 rounded-lg transition-colors"
-        >
-          Limpiar
-        </button>
       </div>
 
       {isLoading && (
@@ -33,15 +27,10 @@ export const NearbyParadasList: React.FC = () => {
       )}
 
       {nearbyParadas.length > 0 && (
-        <div className="space-y-2 pr-2 max-h-[200px] overflow-y-auto">
-          {nearbyParadas.slice(0, 10).map((parada) => (
+        <div className="space-y-2 pr-1 max-h-[300px] sm:max-h-[400px] overflow-y-auto custom-scrollbar">
+          {nearbyParadas.map((parada) => (
             <ParadaCard key={parada.fid} parada={parada} onSelect={setSelectedParada} />
           ))}
-          {nearbyParadas.length > 10 && (
-            <p className="text-xs text-white/50 text-center py-2">
-              Mostrando 10 de {nearbyParadas.length} paradas
-            </p>
-          )}
         </div>
       )}
     </div>
@@ -51,9 +40,9 @@ export const NearbyParadasList: React.FC = () => {
 const ParadaCard: React.FC<{ parada: Parada; onSelect: (parada: Parada) => void }> = ({ parada, onSelect }) => (
   <button
     onClick={() => onSelect(parada)}
-    className="w-full text-left p-2.5 bg-blue-500/10 hover:bg-blue-500/20 rounded-lg border border-blue-500/20 hover:border-blue-500/40 transition-all group"
+    className="w-full text-left p-3 bg-white/5 hover:bg-blue-500/10 rounded-lg border border-white/10 hover:border-blue-400/30 transition-all group"
   >
-    <div className="flex items-start gap-2.5">
+    <div className="flex items-start gap-3">
       <div className="flex-shrink-0 mt-0.5">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-blue-400">
           <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.2" />
@@ -61,13 +50,15 @@ const ParadaCard: React.FC<{ parada: Parada; onSelect: (parada: Parada) => void 
         </svg>
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-white text-sm group-hover:text-blue-400 transition-colors line-clamp-2">
+        <p className="font-medium text-white text-sm group-hover:text-blue-400 transition-colors leading-snug">
           {parada.nombre}
         </p>
-        <div className="flex items-center gap-2 mt-1 text-xs text-white/50">
-          <span>Ruta {parada.ruta}</span>
-          <span>•</span>
-          <span>{parada.codigo === 'I' ? 'Ida' : 'Regreso'}</span>
+        <div className="flex items-center gap-2 mt-1.5 text-xs">
+          <span className="text-white/50">Ruta {parada.ruta}</span>
+          <span className="text-white/30">•</span>
+          <span className="text-white/50 bg-white/5 px-2 py-0.5 rounded">
+            {parada.codigo === 'I' ? 'Ida' : 'Regreso'}
+          </span>
         </div>
       </div>
     </div>

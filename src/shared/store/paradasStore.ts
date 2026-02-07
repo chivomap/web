@@ -22,6 +22,7 @@ interface ParadasState {
   fetchParadasByRuta: (codigoRuta: string) => Promise<void>;
   setSelectedParada: (parada: Parada | null) => void;
   clearNearbyParadas: () => void;
+  clearParadasByRuta: () => void;
   setShowParadasOnMap: (show: boolean) => void;
   setRadius: (radius: number) => void;
 }
@@ -66,6 +67,7 @@ export const useParadasStore = create<ParadasState>((set, get) => ({
         isLoading: false,
       });
     } catch (error) {
+      console.error('Error fetching paradas:', error);
       set({
         error: 'Error al obtener paradas de la ruta',
         isLoading: false,
@@ -81,6 +83,13 @@ export const useParadasStore = create<ParadasState>((set, get) => ({
     set({
       nearbyParadas: [],
       searchLocation: null,
+      selectedParada: null,
+    });
+  },
+
+  clearParadasByRuta: () => {
+    set({
+      paradasByRuta: [],
     });
   },
 

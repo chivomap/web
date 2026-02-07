@@ -1,6 +1,8 @@
 import React from 'react';
 import { BiMap, BiRuler, BiRightArrowAlt, BiX, BiBus } from 'react-icons/bi';
+import { useMap } from 'react-map-gl/maplibre';
 import { useRutasStore } from '../../../../store/rutasStore';
+import { useParadasStore } from '../../../../store/paradasStore';
 import { RouteCodeBadge } from '../../../rutas/RouteCodeBadge';
 import type { RutaFeature } from '../../../../types/rutas';
 
@@ -9,8 +11,23 @@ interface RouteInfoProps {
 }
 
 export const RouteInfo: React.FC<RouteInfoProps> = React.memo(({ route }) => {
+  const { current: map } = useMap();
   const clearSelectedRoute = useRutasStore(state => state.clearSelectedRoute);
+  const paradasByRuta = useParadasStore(state => state.paradasByRuta);
+  const setSelectedParada = useParadasStore(state => state.setSelectedParada);
   const props = route.properties;
+
+  const handleParadaClick = (parada: any) => {
+    setSelectedParada(parada);
+    // Centrar mapa en la parada
+    if (map) {
+      map.flyTo({
+        center: [parada.longitud, parada.latitud],
+        zoom: 16,
+        duration: 1000
+      });
+    }
+  };
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 p-4 space-y-3">
@@ -63,6 +80,44 @@ export const RouteInfo: React.FC<RouteInfoProps> = React.memo(({ route }) => {
         <span>Código: <span className="font-mono">{props.Código_de}</span></span>
         <span>ID: {props.CANTIDAD_D}</span>
       </div>
+
+      {paradasByRuta.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
+          <h4 className="font-semibold text-white text-sm flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-blue-400">
+                <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.2" />
+                <rect x="8" y="7" width="8" height="10" rx="1" fill="currentColor" />
+              </svg>
+              Paradas de esta ruta
+            </span>
+            <span className="text-xs text-white/50 font-normal">{paradasByRuta.length}</span>
+          </h4>
+          <div className="space-y-1.5 max-h-[300px] sm:max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
+            {paradasByRuta.map((parada, idx) => (
+              <button
+                key={`${parada.fid}-${idx}`}
+                onClick={() => handleParadaClick(parada)}
+                className="w-full text-left p-3 bg-white/5 hover:bg-blue-500/10 rounded-lg border border-white/10 hover:border-blue-400/30 transition-all group"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white/80 text-sm group-hover:text-blue-400 transition-colors leading-snug">
+                      {parada.nombre}
+                    </p>
+                    <p className="text-xs text-white/40 mt-1">
+                      {parada.departamento}
+                    </p>
+                  </div>
+                  <span className="text-xs text-white/50 bg-white/5 px-2 py-1 rounded flex-shrink-0">
+                    {parada.codigo === 'I' ? 'Ida' : 'Regreso'}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 });

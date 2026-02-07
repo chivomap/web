@@ -11,6 +11,7 @@ import {
     getRoutesMetadata,
     listRoutes
 } from '../services/GetRutasData';
+import { useParadasStore } from './paradasStore';
 
 interface RutasState {
     // Data
@@ -95,11 +96,18 @@ export const useRutasStore = create<RutasState>((set, get) => ({
 
     selectRoute: async (codigo: string) => {
         set({ isLoading: true, error: null });
+        
+        // Limpiar paradas de ruta anterior
+        useParadasStore.getState().clearParadasByRuta();
+        // Limpiar paradas cercanas también
+        useParadasStore.getState().clearNearbyParadas();
 
         try {
             const route = await getRouteByCode(codigo);
             if (route) {
                 set({ selectedRoute: route, isLoading: false });
+                // Cargar paradas de esta ruta
+                await useParadasStore.getState().fetchParadasByRuta(codigo);
             } else {
                 set({ error: 'Ruta no encontrada', isLoading: false });
             }
@@ -110,6 +118,8 @@ export const useRutasStore = create<RutasState>((set, get) => ({
 
     clearSelectedRoute: () => {
         set({ selectedRoute: null });
+        // Limpiar paradas de la ruta
+        useParadasStore.getState().clearParadasByRuta();
     },
 
     clearNearbyRoutes: () => {
@@ -117,6 +127,8 @@ export const useRutasStore = create<RutasState>((set, get) => ({
             nearbyRoutes: [],
             searchLocation: null
         });
+        // Limpiar paradas también
+        useParadasStore.getState().clearNearbyParadas();
     },
 
     fetchMetadata: async () => {

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useBottomSheetStore } from '../shared/store/bottomSheetStore';
 import { useRutasStore } from '../shared/store/rutasStore';
+import { useParadasStore } from '../shared/store/paradasStore';
 import { useMapStore } from '../shared/store/mapStore';
 import { useAnnotationStore } from '../shared/store/annotationStore';
 
@@ -126,6 +127,7 @@ export const useBottomSheet = () => {
     // Limpiar ruta seleccionada para mostrar el listado
     clearSelectedRoute();
     useRutasStore.getState().fetchNearbyRoutes(lat, lng, radius);
+    useParadasStore.getState().fetchNearbyParadas(lat, lng, radius);
     setActiveTab('info');
     // No forzar estado, dejar que useEffect lo maneje
   };
