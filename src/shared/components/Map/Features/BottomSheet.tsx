@@ -6,6 +6,9 @@ import { useRutasStore } from '../../../store/rutasStore';
 import { Z_INDEX } from '../../../constants/zIndex';
 import { RouteInfo } from './BottomSheet/RouteInfo';
 import { NearbyRoutesList } from './BottomSheet/NearbyRoutesList';
+import { NearbyParadasList } from './BottomSheet/NearbyParadasList';
+import { ParadaInfo } from './BottomSheet/ParadaInfo';
+import { useParadasStore } from '../../../store/paradasStore';
 import { PlaceInfo } from './BottomSheet/PlaceInfo';
 // import { AnnotationsList } from './BottomSheet/AnnotationsList';
 
@@ -16,6 +19,7 @@ export const BottomSheet: React.FC = () => {
   const selectedRoute = useRutasStore(state => state.selectedRoute);
   const nearbyRoutes = useRutasStore(state => state.nearbyRoutes);
   const searchLocation = useRutasStore(state => state.searchLocation);
+  const selectedParada = useParadasStore(state => state.selectedParada);
 
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -164,10 +168,15 @@ export const BottomSheet: React.FC = () => {
           onWheel={handleWheel}
           onTouchMove={handleTouchScroll}
         >
-          {selectedRoute ? (
+          {selectedParada ? (
+            <ParadaInfo parada={selectedParada} />
+          ) : selectedRoute ? (
             <RouteInfo route={selectedRoute} />
           ) : searchLocation || (nearbyRoutes && nearbyRoutes.length > 0) ? (
-            <NearbyRoutesList />
+            <>
+              <NearbyRoutesList />
+              <NearbyParadasList />
+            </>
           ) : (
             <PlaceInfo />
           )}
