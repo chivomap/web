@@ -473,8 +473,8 @@ export const MapLibreMap: React.FC = () => {
             top: routeHover.y + 10
           }}
         >
-          <div className="font-bold text-base mb-1 text-secondary">Ruta {routeHover.codigo}</div>
-          <div className="text-xs text-white/90 mb-2">{routeHover.nombre}</div>
+          <div className="font-bold text-base mb-1 text-secondary">Ruta {routeHover.nombre}</div>
+          <div className="text-xs text-white/60 mb-2 font-mono">Código: {routeHover.codigo}</div>
           <div className="space-y-0.5 text-xs">
             <div className="flex justify-between gap-3">
               <span className="text-white/70">Departamento:</span>
