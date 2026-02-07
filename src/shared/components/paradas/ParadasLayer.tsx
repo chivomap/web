@@ -13,15 +13,17 @@ export const ParadasLayer: React.FC = () => {
   // Ocultar paradas si zoom < 13 (aproximadamente 2km de vista)
   const shouldShowParadas = zoom >= 13;
 
-  // Combinar paradas cercanas y paradas de ruta seleccionada
-  const allParadas = [...nearbyParadas];
+  // Combinar paradas cercanas y paradas de ruta seleccionada (con validación null)
+  const allParadas = [...(nearbyParadas || [])];
   
   // Agregar paradas de ruta si no están ya en nearbyParadas
-  paradasByRuta.forEach(parada => {
-    if (!allParadas.find(p => p.fid === parada.fid)) {
-      allParadas.push(parada);
-    }
-  });
+  if (paradasByRuta) {
+    paradasByRuta.forEach(parada => {
+      if (!allParadas.find(p => p.fid === parada.fid)) {
+        allParadas.push(parada);
+      }
+    });
+  }
 
   if (!showParadasOnMap || allParadas.length === 0 || !shouldShowParadas) return null;
 

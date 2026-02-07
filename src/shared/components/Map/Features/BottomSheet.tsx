@@ -140,7 +140,7 @@ export const BottomSheet: React.FC = () => {
 
   return (
     <div
-      className="fixed inset-x-0 bottom-0 sm:fixed sm:top-20 sm:left-4 sm:bottom-auto w-full sm:w-80 sm:max-h-[60vh]"
+      className="fixed inset-x-0 bottom-0 sm:fixed sm:top-20 sm:left-4 sm:bottom-auto w-full sm:w-80 sm:max-h-[calc(100vh-6rem)]"
       style={{
         height: getSheetHeight(),
         zIndex: Z_INDEX.BOTTOM_SHEET,
@@ -148,7 +148,7 @@ export const BottomSheet: React.FC = () => {
         transition: isDragging ? 'none' : 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
       }}
     >
-      <div className="bg-primary/95 backdrop-blur-sm text-white rounded-t-2xl sm:rounded-xl shadow-xl border-t sm:border border-white/20 h-full flex flex-col">
+      <div className="bg-primary/95 backdrop-blur-sm text-white rounded-t-2xl sm:rounded-xl shadow-xl border-t sm:border border-white/20 h-full sm:h-auto flex flex-col sm:max-h-[calc(100vh-6rem)]">
         <div
           className="sm:hidden w-full flex justify-center pt-4 pb-4 flex-shrink-0 cursor-grab active:cursor-grabbing"
           onTouchStart={handleTouchStart}

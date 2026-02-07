@@ -5,7 +5,9 @@ import type { Parada } from '../../../../types/paradas';
 export const NearbyParadasList: React.FC = () => {
   const { nearbyParadas, searchLocation, isLoading, setSelectedParada } = useParadasStore();
 
-  if (!searchLocation && nearbyParadas.length === 0) return null;
+  if (!searchLocation && (!nearbyParadas || nearbyParadas.length === 0)) return null;
+
+  const paradasCount = nearbyParadas?.length || 0;
 
   return (
     <div className="p-4 space-y-3 border-t border-white/10">
@@ -13,8 +15,8 @@ export const NearbyParadasList: React.FC = () => {
         <div>
           <h3 className="font-bold text-white text-base">Paradas cercanas</h3>
           <p className="text-xs text-white/50">
-            {nearbyParadas.length > 0
-              ? `${nearbyParadas.length} ${nearbyParadas.length === 1 ? 'parada encontrada' : 'paradas encontradas'}`
+            {paradasCount > 0
+              ? `${paradasCount} ${paradasCount === 1 ? 'parada encontrada' : 'paradas encontradas'}`
               : 'No se encontraron paradas en esta área'}
           </p>
         </div>
@@ -26,7 +28,7 @@ export const NearbyParadasList: React.FC = () => {
         </div>
       )}
 
-      {nearbyParadas.length > 0 && (
+      {nearbyParadas && nearbyParadas.length > 0 && (
         <div className="space-y-2 pr-1 max-h-[300px] sm:max-h-[400px] overflow-y-auto custom-scrollbar">
           {nearbyParadas.map((parada) => (
             <ParadaCard key={parada.fid} parada={parada} onSelect={setSelectedParada} />

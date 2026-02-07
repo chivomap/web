@@ -3,42 +3,40 @@ import { Marker } from 'react-map-gl/maplibre';
 
 export const UserLocationMarker: React.FC = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [watchId, setWatchId] = useState<number | null>(null);
 
   useEffect(() => {
-    // Obtener ubicación inicial
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        },
-        (error) => {
-          console.log('Location not available:', error);
+    // Solo iniciar watch si el usuario ya dio permisos
+    if (navigator.geolocation && navigator.permissions) {
+      navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+        if (result.state === 'granted') {
+          // Ya tiene permisos, iniciar watch
+          const id = navigator.geolocation.watchPosition(
+            (position) => {
+              setUserLocation({
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+              });
+            },
+            () => {
+              // Silenciar errores
+            },
+            {
+              enableHighAccuracy: false,
+              maximumAge: 30000,
+              timeout: 10000
+            }
+          );
+          setWatchId(id);
         }
-      );
-
-      // Actualizar ubicación cada 30 segundos
-      const watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        },
-        (error) => {
-          console.log('Location watch error:', error);
-        },
-        {
-          enableHighAccuracy: false,
-          maximumAge: 30000,
-          timeout: 10000
-        }
-      );
-
-      return () => navigator.geolocation.clearWatch(watchId);
+      });
     }
+
+    return () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
   }, []);
 
   if (!userLocation) return null;
