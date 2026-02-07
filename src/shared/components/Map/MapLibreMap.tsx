@@ -4,6 +4,7 @@ import { LngLat, LngLatBounds } from 'maplibre-gl';
 import { useMapStore } from '../../../shared/store/mapStore';
 import { usePinStore } from '../../store/pinStore';
 import { useRutasStore } from '../../store/rutasStore';
+import { useBottomSheet } from '../../../hooks/useBottomSheet';
 import { env } from '../../config/env';
 import { MapStyle } from '../../data/mapStyles';
 import { useThemeStore } from '../../store/themeStore';
@@ -35,6 +36,7 @@ export const MapLibreMap: React.FC = () => {
   const { pin, setPin } = usePinStore();
   const { selectedRoute, nearbyRoutes, showNearbyOnMap, selectRoute } = useRutasStore();
   const { currentMapStyle, setMapStyle } = useThemeStore();
+  const { openNearbyRoutes } = useBottomSheet();
   const { center, zoom } = config;
 
   const mapRef = useRef<MapRef>(null);
@@ -375,6 +377,20 @@ export const MapLibreMap: React.FC = () => {
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>
                 <span>Colocar pin aquí</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  openNearbyRoutes(contextMenu.lngLat.lat, contextMenu.lngLat.lng, 1);
+                  updateConfig({ ...config, center: { lat: contextMenu.lngLat.lat, lng: contextMenu.lngLat.lng }, zoom: 14 });
+                  setContextMenu(null);
+                }}
+                className="w-full px-4 py-2.5 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-3 text-white"
+              >
+                <svg className="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z"/>
+                </svg>
+                <span>Buscar rutas cercanas</span>
               </button>
 
               <button
