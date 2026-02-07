@@ -1,9 +1,8 @@
 import React from 'react';
 import { useMap } from 'react-map-gl/maplibre';
-import { LngLat } from 'maplibre-gl';
-import { BiPlus, BiMinus, BiFullscreen, BiExitFullscreen, BiCurrentLocation } from 'react-icons/bi';
-import { MdMyLocation, MdNearMe, MdAddLocation, MdContentCopy, MdDirectionsBus } from 'react-icons/md';
-import { useAnnotationStore } from '../../../store/annotationStore';
+import { BiPlus, BiMinus, BiFullscreen, BiExitFullscreen, BiCurrentLocation, BiX } from 'react-icons/bi';
+import { MdMyLocation, MdNearMe, MdContentCopy, MdDirectionsBus } from 'react-icons/md';
+import { usePinStore } from '../../../store/pinStore';
 import { useBottomSheet } from '../../../../hooks/useBottomSheet';
 import { useMapStore } from '../../../store/mapStore';
 
@@ -13,7 +12,7 @@ export const MapControls: React.FC = () => {
   const [showLocationMenu, setShowLocationMenu] = React.useState(false);
   const [userLocation, setUserLocation] = React.useState<{ lat: number; lng: number } | null>(null);
   const menuRef = React.useRef<HTMLDivElement>(null);
-  const { addAnnotation } = useAnnotationStore();
+  const { pin, clearPin } = usePinStore();
   const { openNearbyRoutes } = useBottomSheet();
   const { updateConfig, config } = useMapStore();
 
@@ -159,6 +158,17 @@ export const MapControls: React.FC = () => {
           <BiCurrentLocation className="text-secondary text-xl sm:text-xl mx-auto" />
         </button>
 
+      {/* Clear Pin Button */}
+      {pin && (
+        <button
+          onClick={clearPin}
+          className="w-10 h-10 sm:w-10 sm:h-10 bg-primary shadow-lg rounded-lg hover:bg-primary/80 transition-colors touch-manipulation border-2 border-red-500/50"
+          title="Quitar pin"
+        >
+          <BiX className="text-red-500 text-2xl sm:text-2xl mx-auto" />
+        </button>
+      )}
+
         {/* Location Menu */}
         {showLocationMenu && userLocation && (
           <div 
@@ -192,21 +202,6 @@ export const MapControls: React.FC = () => {
             >
               <MdNearMe className="text-secondary text-lg" />
               <span>Rutas cercanas</span>
-            </button>
-            
-            <button
-              onClick={() => {
-                addAnnotation({
-                  type: 'pin',
-                  name: `Mi ubicación ${new Date().toLocaleTimeString('es-SV')}`,
-                  data: { coordinates: new LngLat(userLocation.lng, userLocation.lat) },
-                });
-                setShowLocationMenu(false);
-              }}
-              className="w-full px-3 py-2.5 text-left hover:bg-white/10 transition-colors text-sm flex items-center gap-3 text-white"
-            >
-              <MdAddLocation className="text-secondary text-lg" />
-              <span>Agregar PIN aquí</span>
             </button>
             
             <button
