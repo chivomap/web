@@ -2,20 +2,21 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import Map, { ViewStateChangeEvent, MapRef } from 'react-map-gl/maplibre';
 import { LngLat, LngLatBounds } from 'maplibre-gl';
 import { useMapStore } from '../../../shared/store/mapStore';
-import { useAnnotationStore } from '../../store/annotationStore';
+// import { useAnnotationStore } from '../../store/annotationStore';
 import { useRutasStore } from '../../store/rutasStore';
 import { env } from '../../config/env';
 import { MapStyle } from '../../data/mapStyles';
 import { useThemeStore } from '../../store/themeStore';
 
-import { MapControls, MapMarker, PolygonDisplay, MapStyleSelector, MapScale, GeoLayer, GeoDistritos } from './Features';
+import { MapControls, MapScale, MapStyleSelector, GeoLayer, GeoDistritos } from './Features';
+// import { MapControls, MapMarker, PolygonDisplay, MapStyleSelector, MapScale, GeoLayer, GeoDistritos } from './Features';
 import { RouteLayer, SearchRadiusLayer, NearbyRoutesLayer } from '../rutas';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './popup-styles.css';
 
 export const MapLibreMap: React.FC = () => {
   const [mapReady, setMapReady] = useState<boolean>(false);
-  const [clickPosition, setClickPosition] = useState<LngLat | null>(null);
+  // const [clickPosition, setClickPosition] = useState<LngLat | null>(null);
   const [polygonCoords, setPolygonCoords] = useState<LngLat[]>([]);
   const [hoverInfo, setHoverInfo] = useState<{ name: string; x: number; y: number } | null>(null);
   const [routeHover, setRouteHover] = useState<{ 
@@ -34,7 +35,7 @@ export const MapLibreMap: React.FC = () => {
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [interactiveLayers, setInteractiveLayers] = useState<string[]>(['distritos-fill']);
   const { config, updateConfig } = useMapStore();
-  const { addAnnotation, annotations } = useAnnotationStore();
+  // const { addAnnotation, annotations } = useAnnotationStore();
   const { fetchNearbyRoutes, selectedRoute, nearbyRoutes, showNearbyOnMap, selectRoute } = useRutasStore();
   const { currentMapStyle, setMapStyle } = useThemeStore();
   const { center, zoom } = config;
@@ -124,17 +125,10 @@ export const MapLibreMap: React.FC = () => {
     });
   }, [updateConfig]);
 
-  const [longPressTimer, setLongPressTimer] = React.useState<number | null>(null);
-  const [longPressTriggered, setLongPressTriggered] = React.useState(false);
-
   const handleMapClick = useCallback((event: any) => {
-    // Si fue un long press, no hacer nada en el click
-    if (longPressTriggered) {
-      setLongPressTriggered(false);
-      return;
-    }
 
-    const { lngLat, features } = event;
+    const { features } = event;
+    // const { lngLat, features } = event;
     
     // Check if clicked on a nearby route (hitbox or line)
     if (features && features.length > 0) {
@@ -153,9 +147,9 @@ export const MapLibreMap: React.FC = () => {
       }
     }
     
-    setClickPosition(lngLat);
+    // setClickPosition(lngLat);
     // Solo agregar pin, sin abrir modal
-  }, [nearbyRoutes, selectRoute, longPressTriggered]);
+  }, [nearbyRoutes, selectRoute]);
 
   const handleMapRightClick = useCallback((event: any) => {
     event.preventDefault();
@@ -168,50 +162,28 @@ export const MapLibreMap: React.FC = () => {
     }
   }, [isDrawingMode]);
 
-  // Long press handlers for mobile
-  const handleTouchStart = useCallback((event: any) => {
-    const timer = setTimeout(() => {
-      const { lngLat, point } = event;
-      setLongPressTriggered(true);
-      setContextMenu({ x: point.x, y: point.y, lngLat });
-    }, 500); // 500ms para long press
-    setLongPressTimer(timer);
-  }, []);
-
-  const handleTouchEnd = useCallback(() => {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
-  }, [longPressTimer]);
-
-  const handleTouchMove = useCallback(() => {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
-  }, [longPressTimer]);
-
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.key === 'Escape') {
       setIsDrawingMode(false);
       setPolygonCoords([]);
       setContextMenu(null);
     } else if (event.key === 'Backspace' || event.key === 'Delete') {
-      setClickPosition(null);
+      // setClickPosition(null);
       setPolygonCoords([]);
     } else if (event.ctrlKey && event.key === 'z') {
       setPolygonCoords((prevCoords) => prevCoords.slice(0, -1));
-    } else if (event.key === 'Enter' && polygonCoords.length >= 3) {
-      addAnnotation({
-        type: 'drawn-polygon',
-        name: `Polígono ${new Date().toLocaleTimeString('es-SV')}`,
-        data: { coordinates: polygonCoords },
-      });
-      setPolygonCoords([]);
-      setIsDrawingMode(false);
     }
-  }, [polygonCoords, addAnnotation]);
+    // Comentado: funcionalidad de anotaciones
+    // else if (event.key === 'Enter' && polygonCoords.length >= 3) {
+    //   addAnnotation({
+    //     type: 'drawn-polygon',
+    //     name: `Polígono ${new Date().toLocaleTimeString('es-SV')}`,
+    //     data: { coordinates: polygonCoords },
+    //   });
+    //   setPolygonCoords([]);
+    //   setIsDrawingMode(false);
+    // }
+  }, [polygonCoords]);
 
   React.useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -338,9 +310,6 @@ export const MapLibreMap: React.FC = () => {
           }
         }}
         onContextMenu={handleMapRightClick}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onTouchMove={handleTouchMove}
         maxBounds={[
           [-91.00994252677712, 11.214449814812207], // Southwest
           [-85.6233130419287, 17.838768214469866]   // Northeast
@@ -360,14 +329,14 @@ export const MapLibreMap: React.FC = () => {
             <SearchRadiusLayer />
             <NearbyRoutesLayer />
             <RouteLayer />
-            {clickPosition && <MapMarker position={clickPosition} />}
-            {/* Renderizar pins de anotaciones */}
-            {annotations.filter(a => a.type === 'pin' && a.data?.coordinates).map(annotation => (
+            {/* Comentado: funcionalidad de anotaciones */}
+            {/* {clickPosition && <MapMarker position={clickPosition} />} */}
+            {/* {annotations.filter(a => a.type === 'pin' && a.data?.coordinates).map(annotation => (
               <MapMarker key={annotation.id} position={annotation.data.coordinates as LngLat} />
-            ))}
-            {polygonCoords.length > 0 && (
+            ))} */}
+            {/* {polygonCoords.length > 0 && (
               <PolygonDisplay coordinates={polygonCoords} />
-            )}
+            )} */}
           </>
         )}
       </Map>
@@ -396,7 +365,8 @@ export const MapLibreMap: React.FC = () => {
 
             {/* Opciones principales */}
             <div className="py-1">
-              <button
+              {/* Comentado: funcionalidad de anotaciones */}
+              {/* <button
                 onClick={() => {
                   addAnnotation({
                     type: 'pin',
@@ -414,7 +384,7 @@ export const MapLibreMap: React.FC = () => {
                   <div className="font-medium">Agregar marcador</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">Guardar esta ubicación</div>
                 </div>
-              </button>
+              </button> */}
 
               <button
                 onClick={() => {
@@ -432,7 +402,8 @@ export const MapLibreMap: React.FC = () => {
                 </div>
               </button>
 
-              <button
+              {/* Comentado: funcionalidad de dibujar polígonos */}
+              {/* <button
                 onClick={() => {
                   setIsDrawingMode(true);
                   setPolygonCoords([contextMenu.lngLat]);
@@ -447,7 +418,7 @@ export const MapLibreMap: React.FC = () => {
                   <div className="font-medium">Dibujar polígono</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">Modo dibujo manual</div>
                 </div>
-              </button>
+              </button> */}
             </div>
 
             <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
@@ -508,8 +479,8 @@ export const MapLibreMap: React.FC = () => {
             top: routeHover.y + 10
           }}
         >
-          <div className="font-bold text-base mb-1 text-secondary">Ruta {routeHover.codigo}</div>
-          <div className="text-xs text-white/90 mb-2">{routeHover.nombre}</div>
+          <div className="font-bold text-base mb-1 text-secondary">Ruta {routeHover.nombre}</div>
+          <div className="text-xs text-white/60 mb-2 font-mono">Código: {routeHover.codigo}</div>
           <div className="space-y-0.5 text-xs">
             <div className="flex justify-between gap-3">
               <span className="text-white/70">Departamento:</span>

@@ -4,7 +4,7 @@ import { FaBus } from "react-icons/fa";
 import Fuse from 'fuse.js';
 import { getGeoData, GeoDataSearch } from "../../shared/services/GetGeoData";
 import { useMapStore } from '../../shared/store/mapStore';
-import { useAnnotationStore } from '../../shared/store/annotationStore';
+// import { useAnnotationStore } from '../../shared/store/annotationStore';
 import { getQueryData } from '../../shared/services/GetQueryData';
 import { useRutasStore } from '../../shared/store/rutasStore';
 import { TextCarousel } from './TextCarrusel';
@@ -35,7 +35,7 @@ export const Search: React.FC = () => {
 
   const { selectRoute, allRoutes, fetchAllRoutes, isLoading: isRutasLoading, clearSelectedRoute } = useRutasStore();
 
-  const { addAnnotation } = useAnnotationStore();
+  // const { addAnnotation } = useAnnotationStore();
   const { showError, setLoading } = useErrorStore();
 
   useEffect(() => {
@@ -143,17 +143,18 @@ export const Search: React.FC = () => {
           name: query
         });
 
-        addAnnotation({
-          type: 'search-result',
-          name: query,
-          data: {
-            geojson: data,
-            metadata: {
-              searchType: whatIs as 'D' | 'M' | 'distrito',
-              searchQuery: query,
-            },
-          },
-        });
+        // Comentado: funcionalidad de anotaciones
+        // addAnnotation({
+        //   type: 'search-result',
+        //   name: query,
+        //   data: {
+        //     geojson: data,
+        //     metadata: {
+        //       searchType: whatIs as 'D' | 'M' | 'distrito',
+        //       searchQuery: query,
+        //     },
+        //   },
+        // });
 
         if (whatIs === 'D') {
           setCurrentLevel('departamento');
@@ -183,59 +184,65 @@ export const Search: React.FC = () => {
     }
   }, [selectedInfo]);
 
-  // --- Search Logic Local (Fuse.js) ---
+  // --- Unified Search Logic with Lazy Loading ---
+  type PlaceItem = { name: string; type: 'D' | 'M' | 'distrito' };
+  
+  const fuseInstance = useMemo(() => {
+    if (mode === 'places') {
+      const allPlaces: PlaceItem[] = [
+        ...geoData.departamentos.map(d => ({ name: d, type: 'D' as const })),
+        ...geoData.municipios.map(m => ({ name: m, type: 'M' as const })),
+        ...geoData.distritos.map(d => ({ name: d, type: 'distrito' as const }))
+      ];
+      return new Fuse(allPlaces, {
+        threshold: 0.3,
+        keys: ['name']
+      });
+    } else {
+      return new Fuse(allRoutes, {
+        threshold: 0.2,
+        useExtendedSearch: true,
+        ignoreLocation: true,
+        keys: ['nombre', 'codigo']
+      });
+    }
+  }, [mode, geoData, allRoutes]);
 
-  const fuseOptions = useMemo(() => ({
-    threshold: 0.3,
-    keys: ['name']
-  }), []);
+  const searchResults = useMemo(() => {
+    if (!inputValue) return { departamentos: [], municipios: [], distritos: [], routes: [] };
 
-  const fuseDepartamentos = useMemo(() =>
-    new Fuse(geoData.departamentos.map(d => ({ name: d })), fuseOptions),
-    [geoData.departamentos, fuseOptions]
-  );
-  const fuseMunicipios = useMemo(() =>
-    new Fuse(geoData.municipios.map(m => ({ name: m })), fuseOptions),
-    [geoData.municipios, fuseOptions]
-  );
-  const fuseDistritos = useMemo(() =>
-    new Fuse(geoData.distritos.map(d => ({ name: d })), fuseOptions),
-    [geoData.distritos, fuseOptions]
-  );
+    const results = fuseInstance.search(inputValue);
+    
+    if (mode === 'places') {
+      const placeResults = results.slice(0, 15);
+      const departamentos: string[] = [];
+      const municipios: string[] = [];
+      const distritos: string[] = [];
+      
+      placeResults.forEach(r => {
+        const item = r.item as any;
+        if (item.type === 'D' && departamentos.length < 5) departamentos.push(item.name);
+        else if (item.type === 'M' && municipios.length < 5) municipios.push(item.name);
+        else if (item.type === 'distrito' && distritos.length < 5) distritos.push(item.name);
+      });
+      
+      return { departamentos, municipios, distritos, routes: [] };
+    } else {
+      return {
+        departamentos: [],
+        municipios: [],
+        distritos: [],
+        routes: results.slice(0, 20).map(r => r.item as typeof allRoutes[0])
+      };
+    }
+  }, [inputValue, mode, fuseInstance, allRoutes]);
 
-  // Rutas Fuse Optimizado para encontrar "3", "33", "33-A"
-  const fuseRoutes = useMemo(() =>
-    new Fuse(allRoutes, {
-      threshold: 0.2, // Más estricto para que matches parciales tengan sentido y no traiga basura
-      useExtendedSearch: true, // Permitir operadores avanzados si se requieren, pero mejora fuzzy simple también
-      ignoreLocation: true, // Buscar en todo el string, no solo al inicio
-      keys: ['nombre', 'codigo']
-    }),
-    [allRoutes]
-  );
-
-  const LIMIT = 5;
-
-  const filteredDepartamentos = (mode === 'places' && inputValue)
-    ? fuseDepartamentos.search(inputValue).slice(0, LIMIT).map(r => r.item.name)
-    : [];
-
-  const filteredMunicipios = (mode === 'places' && inputValue)
-    ? fuseMunicipios.search(inputValue).slice(0, LIMIT).map(r => r.item.name)
-    : [];
-
-  const filteredDistritos = (mode === 'places' && inputValue)
-    ? fuseDistritos.search(inputValue).slice(0, LIMIT).map(r => r.item.name)
-    : [];
-
-  const filteredRoutes = (mode === 'routes' && inputValue)
-    ? fuseRoutes.search(inputValue).slice(0, 20).map(r => r.item)
-    : [];
+  const { departamentos: filteredDepartamentos, municipios: filteredMunicipios, distritos: filteredDistritos, routes: filteredRoutes } = searchResults;
 
   const hasResults = filteredDepartamentos.length > 0 ||
     filteredMunicipios.length > 0 ||
     filteredDistritos.length > 0 ||
-    (mode === 'routes' && filteredRoutes.length > 0);
+    filteredRoutes.length > 0;
 
   const isSelfLoading = mode === 'routes' && isRutasLoading && allRoutes.length === 0;
 
@@ -248,7 +255,6 @@ export const Search: React.FC = () => {
       >
         {search && (
           <div className="w-full relative flex flex-col gap-2">
-
             <div className="relative w-full group">
               <div className={`
                 absolute inset-0 bg-secondary/20 rounded-xl blur transition-opacity duration-300

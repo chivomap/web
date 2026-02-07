@@ -1,0 +1,112 @@
+import React, { useState, useCallback } from 'react';
+import { BiLoaderAlt } from 'react-icons/bi';
+import { useRutasStore } from '../../../../store/rutasStore';
+import { RouteCodeBadge } from '../../../rutas/RouteCodeBadge';
+import type { RutaNearby } from '../../../../types/rutas';
+
+export const NearbyRoutesList: React.FC = React.memo(() => {
+  const nearbyRoutes = useRutasStore(state => state.nearbyRoutes);
+  const searchLocation = useRutasStore(state => state.searchLocation);
+  const searchRadius = useRutasStore(state => state.searchRadius);
+  const isLoading = useRutasStore(state => state.isLoading);
+  const selectRoute = useRutasStore(state => state.selectRoute);
+  const clearNearbyRoutes = useRutasStore(state => state.clearNearbyRoutes);
+  const setRadius = useRutasStore(state => state.setRadius);
+  const fetchNearbyRoutes = useRutasStore(state => state.fetchNearbyRoutes);
+
+  const [radiusDebounce, setRadiusDebounce] = useState<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleRadiusChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newRadius = parseFloat(e.target.value);
+    setRadius(newRadius);
+
+    if (radiusDebounce) clearTimeout(radiusDebounce);
+
+    const timeout = setTimeout(() => {
+      if (searchLocation) {
+        fetchNearbyRoutes(searchLocation.lat, searchLocation.lng, newRadius);
+      }
+    }, 500);
+
+    setRadiusDebounce(timeout);
+  }, [searchLocation, radiusDebounce, setRadius, fetchNearbyRoutes]);
+
+  if (!searchLocation && (!nearbyRoutes || nearbyRoutes.length === 0)) return null;
+
+  return (
+    <div className="p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-bold text-white text-lg">Rutas cercanas</h3>
+          <p className="text-xs text-white/50">
+            {nearbyRoutes && nearbyRoutes.length > 0
+              ? `${nearbyRoutes.length} ${nearbyRoutes.length === 1 ? 'ruta encontrada' : 'rutas encontradas'}`
+              : 'No se encontraron rutas en esta área'}
+          </p>
+        </div>
+        <button
+          onClick={clearNearbyRoutes}
+          className="text-xs text-white/60 hover:text-white px-3 py-1.5 hover:bg-white/10 rounded-lg transition-colors"
+        >
+          Limpiar
+        </button>
+      </div>
+
+      {searchLocation && (
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-white/60">Radio:</span>
+          <input
+            type="range"
+            min="0.5"
+            max="5"
+            step="0.5"
+            value={searchRadius}
+            onChange={handleRadiusChange}
+            className="flex-1 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer slider-thumb"
+          />
+          <span className="text-secondary font-semibold min-w-[3rem] text-right flex items-center gap-1">
+            {isLoading && <BiLoaderAlt className="animate-spin" />}
+            {searchRadius} km
+          </span>
+        </div>
+      )}
+
+      {nearbyRoutes && nearbyRoutes.length > 0 && (
+        <div className="space-y-2 pr-2">
+          {nearbyRoutes.map((ruta) => (
+            <RouteCard key={ruta.codigo} ruta={ruta} onSelect={selectRoute} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+});
+
+NearbyRoutesList.displayName = 'NearbyRoutesList';
+
+const RouteCard: React.FC<{ ruta: RutaNearby; onSelect: (code: string) => void }> = React.memo(({ ruta, onSelect }) => (
+  <button
+    onClick={() => onSelect(ruta.codigo)}
+    className="w-full text-left p-2.5 bg-white/5 hover:bg-secondary/10 rounded-lg border border-white/10 hover:border-secondary/30 transition-all group"
+  >
+    <div className="flex items-center gap-2.5">
+      <RouteCodeBadge code={ruta.nombre} subtipo={ruta.subtipo} />
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-white text-sm group-hover:text-secondary transition-colors">
+          Ruta {ruta.nombre}
+        </p>
+        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+          <span className="text-xs text-white/50 truncate">{ruta.subtipo}</span>
+          {ruta.departamento && (
+            <span className="text-xs text-white/40">• {ruta.departamento}</span>
+          )}
+          <span className="text-xs text-secondary font-medium">
+            {ruta.distancia_m < 1000 ? `${Math.round(ruta.distancia_m)}m` : `${(ruta.distancia_m / 1000).toFixed(1)}km`}
+          </span>
+        </div>
+      </div>
+    </div>
+  </button>
+));
+
+RouteCard.displayName = 'RouteCard';
