@@ -45,8 +45,8 @@ export const RouteInfo: React.FC<RouteInfoProps> = React.memo(({ route }) => {
         </div>
         <button
           onClick={clearSelectedRoute}
-          className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white"
-          title="Volver al listado"
+          className="p-1.5 hover:bg-red-500/10 rounded-lg transition-colors text-red-400 hover:text-red-300"
+          title="Cerrar"
         >
           <BiX className="text-2xl" />
         </button>

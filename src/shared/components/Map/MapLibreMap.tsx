@@ -4,7 +4,6 @@ import { LngLat, LngLatBounds } from 'maplibre-gl';
 import { useMapStore } from '../../../shared/store/mapStore';
 import { usePinStore } from '../../store/pinStore';
 import { useRutasStore } from '../../store/rutasStore';
-import { useParadasStore } from '../../store/paradasStore';
 import { useBottomSheet } from '../../../hooks/useBottomSheet';
 import { env } from '../../config/env';
 import { MapStyle } from '../../data/mapStyles';
@@ -40,7 +39,6 @@ export const MapLibreMap: React.FC = () => {
   const { config, updateConfig } = useMapStore();
   const { pin, setPin } = usePinStore();
   const { selectedRoute, nearbyRoutes, showNearbyOnMap, selectRoute, setHoveredRoute, setOverlappingRoutes } = useRutasStore();
-  const { fetchNearbyParadas } = useParadasStore();
   const { currentMapStyle, setMapStyle } = useThemeStore();
   const { openNearbyRoutes } = useBottomSheet();
   const { center, zoom } = config;
