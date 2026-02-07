@@ -1,10 +1,8 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useBottomSheet } from '../../../../hooks/useBottomSheet';
 // import { useAnnotationStore } from '../../../store/annotationStore';
 import { useRutasStore } from '../../../store/rutasStore';
 // import { useBottomSheetStore } from '../../../store/bottomSheetStore';
-import { BiMap, BiBus } from 'react-icons/bi';
-// import { BiMap, BiBookmark, BiBus } from 'react-icons/bi';
 import { Z_INDEX } from '../../../constants/zIndex';
 import { RouteInfo } from './BottomSheet/RouteInfo';
 import { NearbyRoutesList } from './BottomSheet/NearbyRoutesList';
@@ -22,9 +20,11 @@ export const BottomSheet: React.FC = () => {
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartY, setDragStartY] = useState(0);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const lastScrollTop = useRef(0);
 
   const getSheetHeight = useCallback(() => {
-    if (window.innerWidth >= 640) return 'auto';
+    if (window.innerWidth >= 640) return '60vh'; // Desktop: altura fija
     switch (sheetState) {
       case 'peek': return '140px';
       case 'half': return '50dvh';
@@ -67,26 +67,69 @@ export const BottomSheet: React.FC = () => {
     else if (sheetState === 'half') setSheetState('full');
   }, [sheetState, setSheetState]);
 
-  const tabLabel = useMemo(() => {
-    if (selectedRoute) return 'Ruta';
-    if (searchLocation || (nearbyRoutes && nearbyRoutes.length > 0)) {
-      return `Rutas (${nearbyRoutes?.length || 0})`;
+  // Scroll inteligente: expandir drawer en vez de hacer scroll
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    // Solo en mobile
+    if (window.innerWidth >= 640) return;
+    
+    // Si no está en full, expandir en vez de hacer scroll
+    if (sheetState !== 'full') {
+      if (e.deltaY < 0) { // Scroll up
+        e.preventDefault();
+        if (sheetState === 'peek') setSheetState('half');
+        else if (sheetState === 'half') setSheetState('full');
+      }
+    } else {
+      // En full, si está en el top y scrollea hacia abajo, colapsar
+      const content = contentRef.current;
+      if (content) {
+        const isAtTop = content.scrollTop === 0;
+        const isScrollingDown = e.deltaY > 0;
+        
+        if (isAtTop && isScrollingDown) {
+          e.preventDefault();
+          setSheetState('half');
+        }
+      }
     }
-    return 'Información';
-  }, [selectedRoute, searchLocation, nearbyRoutes]);
+  }, [sheetState, setSheetState]);
 
-  const tabIcon = useMemo(() => {
-    if (selectedRoute || searchLocation || (nearbyRoutes && nearbyRoutes.length > 0)) {
-      return <BiBus className="inline mr-2" />;
+  // Touch scroll inteligente
+  const handleTouchScroll = useCallback((e: React.TouchEvent) => {
+    // Solo en mobile
+    if (window.innerWidth >= 640) return;
+    
+    const content = contentRef.current;
+    if (!content) return;
+
+    const touch = e.touches[0];
+    const currentY = touch.clientY;
+    const deltaY = lastScrollTop.current - currentY;
+    
+    // Si no está en full, expandir
+    if (sheetState !== 'full') {
+      if (deltaY > 5) { // Scroll up
+        e.preventDefault();
+        if (sheetState === 'peek') setSheetState('half');
+        else if (sheetState === 'half') setSheetState('full');
+      }
+    } else {
+      // En full, si está en el top y scrollea hacia abajo, colapsar
+      const isAtTop = content.scrollTop === 0;
+      if (isAtTop && deltaY < -10) { // Scroll down
+        e.preventDefault();
+        setSheetState('half');
+      }
     }
-    return <BiMap className="inline mr-2" />;
-  }, [selectedRoute, searchLocation, nearbyRoutes]);
+    
+    lastScrollTop.current = currentY;
+  }, [sheetState, setSheetState]);
 
   if (!isOpen) return null;
 
   return (
     <div
-      className="fixed inset-x-0 bottom-0 sm:absolute sm:top-20 sm:bottom-auto sm:left-4 w-full sm:w-80 sm:max-h-[calc(100vh-6rem)]"
+      className="fixed inset-x-0 bottom-0 sm:fixed sm:top-20 sm:left-4 sm:bottom-auto w-full sm:w-80 sm:max-h-[60vh]"
       style={{
         height: getSheetHeight(),
         zIndex: Z_INDEX.BOTTOM_SHEET,
@@ -105,28 +148,15 @@ export const BottomSheet: React.FC = () => {
           <div className="w-12 h-1.5 bg-secondary/40 rounded-full" />
         </div>
 
-        <div className="flex border-b border-white/20 flex-shrink-0">
-          <button
-            onClick={() => {}}
-            className="flex-1 px-4 py-3 text-sm font-medium transition-colors text-white border-b-2 border-secondary"
-          >
-            {tabIcon}
-            {tabLabel}
-          </button>
-          {/* <button
-            onClick={() => setActiveTab('annotations')}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'annotations'
-                ? 'text-white border-b-2 border-secondary'
-                : 'text-white/60 hover:text-white/80'
-            }`}
-          >
-            <BiBookmark className="inline mr-2" />
-            Anotaciones ({annotations.length})
-          </button> */}
-        </div>
-
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div
+          ref={contentRef}
+          className="flex-1 custom-scrollbar"
+          style={{
+            overflowY: window.innerWidth >= 640 ? 'auto' : (sheetState === 'full' ? 'auto' : 'hidden')
+          }}
+          onWheel={handleWheel}
+          onTouchMove={handleTouchScroll}
+        >
           {selectedRoute ? (
             <RouteInfo route={selectedRoute} />
           ) : searchLocation || (nearbyRoutes && nearbyRoutes.length > 0) ? (
