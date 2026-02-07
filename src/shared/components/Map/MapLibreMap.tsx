@@ -2,20 +2,21 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import Map, { ViewStateChangeEvent, MapRef } from 'react-map-gl/maplibre';
 import { LngLat, LngLatBounds } from 'maplibre-gl';
 import { useMapStore } from '../../../shared/store/mapStore';
-import { useAnnotationStore } from '../../store/annotationStore';
+// import { useAnnotationStore } from '../../store/annotationStore';
 import { useRutasStore } from '../../store/rutasStore';
 import { env } from '../../config/env';
 import { MapStyle } from '../../data/mapStyles';
 import { useThemeStore } from '../../store/themeStore';
 
-import { MapControls, MapMarker, PolygonDisplay, MapStyleSelector, MapScale, GeoLayer, GeoDistritos } from './Features';
+import { MapControls, MapScale, MapStyleSelector, GeoLayer, GeoDistritos } from './Features';
+// import { MapControls, MapMarker, PolygonDisplay, MapStyleSelector, MapScale, GeoLayer, GeoDistritos } from './Features';
 import { RouteLayer, SearchRadiusLayer, NearbyRoutesLayer } from '../rutas';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './popup-styles.css';
 
 export const MapLibreMap: React.FC = () => {
   const [mapReady, setMapReady] = useState<boolean>(false);
-  const [clickPosition, setClickPosition] = useState<LngLat | null>(null);
+  // const [clickPosition, setClickPosition] = useState<LngLat | null>(null);
   const [polygonCoords, setPolygonCoords] = useState<LngLat[]>([]);
   const [hoverInfo, setHoverInfo] = useState<{ name: string; x: number; y: number } | null>(null);
   const [routeHover, setRouteHover] = useState<{ 
@@ -34,7 +35,7 @@ export const MapLibreMap: React.FC = () => {
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [interactiveLayers, setInteractiveLayers] = useState<string[]>(['distritos-fill']);
   const { config, updateConfig } = useMapStore();
-  const { addAnnotation, annotations } = useAnnotationStore();
+  // const { addAnnotation, annotations } = useAnnotationStore();
   const { fetchNearbyRoutes, selectedRoute, nearbyRoutes, showNearbyOnMap, selectRoute } = useRutasStore();
   const { currentMapStyle, setMapStyle } = useThemeStore();
   const { center, zoom } = config;
@@ -126,7 +127,8 @@ export const MapLibreMap: React.FC = () => {
 
   const handleMapClick = useCallback((event: any) => {
 
-    const { lngLat, features } = event;
+    const { features } = event;
+    // const { lngLat, features } = event;
     
     // Check if clicked on a nearby route (hitbox or line)
     if (features && features.length > 0) {
@@ -145,7 +147,7 @@ export const MapLibreMap: React.FC = () => {
       }
     }
     
-    setClickPosition(lngLat);
+    // setClickPosition(lngLat);
     // Solo agregar pin, sin abrir modal
   }, [nearbyRoutes, selectRoute]);
 
@@ -166,20 +168,22 @@ export const MapLibreMap: React.FC = () => {
       setPolygonCoords([]);
       setContextMenu(null);
     } else if (event.key === 'Backspace' || event.key === 'Delete') {
-      setClickPosition(null);
+      // setClickPosition(null);
       setPolygonCoords([]);
     } else if (event.ctrlKey && event.key === 'z') {
       setPolygonCoords((prevCoords) => prevCoords.slice(0, -1));
-    } else if (event.key === 'Enter' && polygonCoords.length >= 3) {
-      addAnnotation({
-        type: 'drawn-polygon',
-        name: `Polígono ${new Date().toLocaleTimeString('es-SV')}`,
-        data: { coordinates: polygonCoords },
-      });
-      setPolygonCoords([]);
-      setIsDrawingMode(false);
     }
-  }, [polygonCoords, addAnnotation]);
+    // Comentado: funcionalidad de anotaciones
+    // else if (event.key === 'Enter' && polygonCoords.length >= 3) {
+    //   addAnnotation({
+    //     type: 'drawn-polygon',
+    //     name: `Polígono ${new Date().toLocaleTimeString('es-SV')}`,
+    //     data: { coordinates: polygonCoords },
+    //   });
+    //   setPolygonCoords([]);
+    //   setIsDrawingMode(false);
+    // }
+  }, [polygonCoords]);
 
   React.useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -325,14 +329,14 @@ export const MapLibreMap: React.FC = () => {
             <SearchRadiusLayer />
             <NearbyRoutesLayer />
             <RouteLayer />
-            {clickPosition && <MapMarker position={clickPosition} />}
-            {/* Renderizar pins de anotaciones */}
-            {annotations.filter(a => a.type === 'pin' && a.data?.coordinates).map(annotation => (
+            {/* Comentado: funcionalidad de anotaciones */}
+            {/* {clickPosition && <MapMarker position={clickPosition} />} */}
+            {/* {annotations.filter(a => a.type === 'pin' && a.data?.coordinates).map(annotation => (
               <MapMarker key={annotation.id} position={annotation.data.coordinates as LngLat} />
-            ))}
-            {polygonCoords.length > 0 && (
+            ))} */}
+            {/* {polygonCoords.length > 0 && (
               <PolygonDisplay coordinates={polygonCoords} />
-            )}
+            )} */}
           </>
         )}
       </Map>
@@ -361,7 +365,8 @@ export const MapLibreMap: React.FC = () => {
 
             {/* Opciones principales */}
             <div className="py-1">
-              <button
+              {/* Comentado: funcionalidad de anotaciones */}
+              {/* <button
                 onClick={() => {
                   addAnnotation({
                     type: 'pin',
@@ -379,7 +384,7 @@ export const MapLibreMap: React.FC = () => {
                   <div className="font-medium">Agregar marcador</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">Guardar esta ubicación</div>
                 </div>
-              </button>
+              </button> */}
 
               <button
                 onClick={() => {
@@ -397,7 +402,8 @@ export const MapLibreMap: React.FC = () => {
                 </div>
               </button>
 
-              <button
+              {/* Comentado: funcionalidad de dibujar polígonos */}
+              {/* <button
                 onClick={() => {
                   setIsDrawingMode(true);
                   setPolygonCoords([contextMenu.lngLat]);
@@ -412,7 +418,7 @@ export const MapLibreMap: React.FC = () => {
                   <div className="font-medium">Dibujar polígono</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">Modo dibujo manual</div>
                 </div>
-              </button>
+              </button> */}
             </div>
 
             <div className="border-t border-gray-200 dark:border-gray-700 my-1" />

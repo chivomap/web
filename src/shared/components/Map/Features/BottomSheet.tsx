@@ -1,19 +1,20 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { useBottomSheet } from '../../../../hooks/useBottomSheet';
-import { useAnnotationStore } from '../../../store/annotationStore';
+// import { useAnnotationStore } from '../../../store/annotationStore';
 import { useRutasStore } from '../../../store/rutasStore';
-import { useBottomSheetStore } from '../../../store/bottomSheetStore';
-import { BiMap, BiBookmark, BiBus } from 'react-icons/bi';
+// import { useBottomSheetStore } from '../../../store/bottomSheetStore';
+import { BiMap, BiBus } from 'react-icons/bi';
+// import { BiMap, BiBookmark, BiBus } from 'react-icons/bi';
 import { Z_INDEX } from '../../../constants/zIndex';
 import { RouteInfo } from './BottomSheet/RouteInfo';
 import { NearbyRoutesList } from './BottomSheet/NearbyRoutesList';
 import { PlaceInfo } from './BottomSheet/PlaceInfo';
-import { AnnotationsList } from './BottomSheet/AnnotationsList';
+// import { AnnotationsList } from './BottomSheet/AnnotationsList';
 
 export const BottomSheet: React.FC = () => {
   const { isOpen, sheetState, setSheetState } = useBottomSheet();
-  const { activeTab, setActiveTab } = useBottomSheetStore();
-  const annotations = useAnnotationStore(state => state.annotations);
+  // const { activeTab, setActiveTab } = useBottomSheetStore();
+  // const annotations = useAnnotationStore(state => state.annotations);
   const selectedRoute = useRutasStore(state => state.selectedRoute);
   const nearbyRoutes = useRutasStore(state => state.nearbyRoutes);
   const searchLocation = useRutasStore(state => state.searchLocation);
@@ -106,17 +107,13 @@ export const BottomSheet: React.FC = () => {
 
         <div className="flex border-b border-white/20 flex-shrink-0">
           <button
-            onClick={() => setActiveTab('info')}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'info'
-                ? 'text-white border-b-2 border-secondary'
-                : 'text-white/60 hover:text-white/80'
-            }`}
+            onClick={() => {}}
+            className="flex-1 px-4 py-3 text-sm font-medium transition-colors text-white border-b-2 border-secondary"
           >
             {tabIcon}
             {tabLabel}
           </button>
-          <button
+          {/* <button
             onClick={() => setActiveTab('annotations')}
             className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
               activeTab === 'annotations'
@@ -126,11 +123,18 @@ export const BottomSheet: React.FC = () => {
           >
             <BiBookmark className="inline mr-2" />
             Anotaciones ({annotations.length})
-          </button>
+          </button> */}
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar">
-          {activeTab === 'info' ? (
+          {selectedRoute ? (
+            <RouteInfo route={selectedRoute} />
+          ) : searchLocation || (nearbyRoutes && nearbyRoutes.length > 0) ? (
+            <NearbyRoutesList />
+          ) : (
+            <PlaceInfo />
+          )}
+          {/* {activeTab === 'info' ? (
             selectedRoute ? (
               <RouteInfo route={selectedRoute} />
             ) : searchLocation || (nearbyRoutes && nearbyRoutes.length > 0) ? (
@@ -140,7 +144,7 @@ export const BottomSheet: React.FC = () => {
             )
           ) : (
             <AnnotationsList />
-          )}
+          )} */}
         </div>
       </div>
     </div>

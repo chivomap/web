@@ -4,7 +4,7 @@ import { FaBus } from "react-icons/fa";
 import Fuse from 'fuse.js';
 import { getGeoData, GeoDataSearch } from "../../shared/services/GetGeoData";
 import { useMapStore } from '../../shared/store/mapStore';
-import { useAnnotationStore } from '../../shared/store/annotationStore';
+// import { useAnnotationStore } from '../../shared/store/annotationStore';
 import { getQueryData } from '../../shared/services/GetQueryData';
 import { useRutasStore } from '../../shared/store/rutasStore';
 import { TextCarousel } from './TextCarrusel';
@@ -35,7 +35,7 @@ export const Search: React.FC = () => {
 
   const { selectRoute, allRoutes, fetchAllRoutes, isLoading: isRutasLoading, clearSelectedRoute } = useRutasStore();
 
-  const { addAnnotation } = useAnnotationStore();
+  // const { addAnnotation } = useAnnotationStore();
   const { showError, setLoading } = useErrorStore();
 
   useEffect(() => {
@@ -143,17 +143,18 @@ export const Search: React.FC = () => {
           name: query
         });
 
-        addAnnotation({
-          type: 'search-result',
-          name: query,
-          data: {
-            geojson: data,
-            metadata: {
-              searchType: whatIs as 'D' | 'M' | 'distrito',
-              searchQuery: query,
-            },
-          },
-        });
+        // Comentado: funcionalidad de anotaciones
+        // addAnnotation({
+        //   type: 'search-result',
+        //   name: query,
+        //   data: {
+        //     geojson: data,
+        //     metadata: {
+        //       searchType: whatIs as 'D' | 'M' | 'distrito',
+        //       searchQuery: query,
+        //     },
+        //   },
+        // });
 
         if (whatIs === 'D') {
           setCurrentLevel('departamento');
