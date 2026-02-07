@@ -1,0 +1,1 @@
+export { ParadasLayer } from './ParadasLayer';

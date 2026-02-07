@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { BiLoaderAlt } from 'react-icons/bi';
 import { useRutasStore } from '../../../../store/rutasStore';
+import { useParadasStore } from '../../../../store/paradasStore';
 import { useBottomSheetStore } from '../../../../store/bottomSheetStore';
 import { RouteCodeBadge } from '../../../rutas/RouteCodeBadge';
 import type { RutaNearby } from '../../../../types/rutas';
@@ -17,6 +18,7 @@ export const NearbyRoutesList: React.FC = React.memo(() => {
   const setHoveredRoute = useRutasStore(state => state.setHoveredRoute);
   const overlappingRoutes = useRutasStore(state => state.overlappingRoutes);
   const setOverlappingRoutes = useRutasStore(state => state.setOverlappingRoutes);
+  const fetchNearbyParadas = useParadasStore(state => state.fetchNearbyParadas);
   const setSheetState = useBottomSheetStore(state => state.setSheetState);
 
   const [radiusDebounce, setRadiusDebounce] = useState<ReturnType<typeof setTimeout> | null>(null);
@@ -37,11 +39,12 @@ export const NearbyRoutesList: React.FC = React.memo(() => {
     const timeout = setTimeout(() => {
       if (searchLocation) {
         fetchNearbyRoutes(searchLocation.lat, searchLocation.lng, newRadius);
+        fetchNearbyParadas(searchLocation.lat, searchLocation.lng, newRadius);
       }
     }, 500);
 
     setRadiusDebounce(timeout);
-  }, [searchLocation, radiusDebounce, setRadius, fetchNearbyRoutes]);
+  }, [searchLocation, radiusDebounce, setRadius, fetchNearbyRoutes, fetchNearbyParadas]);
 
   if (!searchLocation && (!nearbyRoutes || nearbyRoutes.length === 0)) return null;
 
