@@ -6,20 +6,25 @@ export const UserLocationMarker: React.FC = () => {
   const [watchId, setWatchId] = useState<number | null>(null);
 
   useEffect(() => {
+    console.log('🌐 App loaded - checking geolocation permissions...');
     // Solo iniciar watch si el usuario ya dio permisos
     if (navigator.geolocation && navigator.permissions) {
       navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+        console.log('🔐 Geolocation permission status:', result.state);
         if (result.state === 'granted') {
+          console.log('✅ Permission granted - starting location watch...');
           // Ya tiene permisos, iniciar watch
           const id = navigator.geolocation.watchPosition(
             (position) => {
-              setUserLocation({
+              const location = {
                 lat: position.coords.latitude,
                 lng: position.coords.longitude
-              });
+              };
+              console.log('📍 User location updated:', location);
+              setUserLocation(location);
             },
-            () => {
-              // Silenciar errores
+            (error) => {
+              console.error('❌ Location watch error:', error);
             },
             {
               enableHighAccuracy: false,
@@ -28,12 +33,17 @@ export const UserLocationMarker: React.FC = () => {
             }
           );
           setWatchId(id);
+        } else {
+          console.log('⚠️ No geolocation permission - user marker will not show until permission granted');
         }
       });
+    } else {
+      console.log('❌ Geolocation or Permissions API not supported');
     }
 
     return () => {
       if (watchId !== null) {
+        console.log('🛑 Stopping location watch');
         navigator.geolocation.clearWatch(watchId);
       }
     };

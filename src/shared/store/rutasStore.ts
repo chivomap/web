@@ -76,17 +76,26 @@ export const useRutasStore = create<RutasState>((set, get) => ({
     },
 
     fetchNearbyRoutes: async (lat: number, lng: number, radius?: number) => {
+        const startTime = Date.now();
+        console.log(`[${new Date().toISOString()}] 🔄 fetchNearbyRoutes started`);
+        
         const r = radius ?? get().searchRadius;
         set({ isLoading: true, error: null, searchLocation: { lat, lng } });
 
         try {
+            console.log(`[${new Date().toISOString()}] 📞 Calling API getNearbyRoutes...`);
             const response = await getNearbyRoutes(lat, lng, r);
+            const apiTime = Date.now();
+            console.log(`[${new Date().toISOString()}] ✅ API response received (took ${apiTime - startTime}ms):`, response.routes.length, 'routes');
+            
             set({
                 nearbyRoutes: response.routes,
                 searchRadius: response.radius_km,
                 isLoading: false
             });
-        } catch {
+            console.log(`[${new Date().toISOString()}] ✅ Store updated (total: ${Date.now() - startTime}ms)`);
+        } catch (error) {
+            console.error(`[${new Date().toISOString()}] ❌ fetchNearbyRoutes error (took ${Date.now() - startTime}ms):`, error);
             set({
                 error: 'Error al buscar rutas cercanas',
                 isLoading: false

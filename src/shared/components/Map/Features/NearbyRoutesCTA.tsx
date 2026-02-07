@@ -11,22 +11,44 @@ export const NearbyRoutesCTA: React.FC = () => {
   const { updateConfig } = useMapStore();
 
   const handleFindNearby = () => {
+    const startTime = Date.now();
+    console.log(`[${new Date().toISOString()}] 🚌 CTA "Buscar rutas cercanas" clicked`);
+    
     if ('geolocation' in navigator) {
       setIsLoading(true);
-      clearSelectedRoute(); // Clear any selected route first
+      clearSelectedRoute();
+      
+      console.log(`[${new Date().toISOString()}] 📡 Requesting geolocation...`);
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          const geoTime = Date.now();
           const { latitude, longitude } = position.coords;
+          console.log(`[${new Date().toISOString()}] ✅ Location received (took ${geoTime - startTime}ms):`, { lat: latitude, lng: longitude });
+          
+          console.log(`[${new Date().toISOString()}] 🗺️ Updating map center...`);
           updateConfig({ center: { lat: latitude, lng: longitude }, zoom: 14 });
+          const mapTime = Date.now();
+          console.log(`[${new Date().toISOString()}] ✅ Map updated (took ${mapTime - geoTime}ms)`);
+          
+          console.log(`[${new Date().toISOString()}] 🔍 Fetching routes and paradas in parallel...`);
           Promise.all([
             fetchNearbyRoutes(latitude, longitude, 0.5),
             fetchNearbyParadas(latitude, longitude, 0.5)
-          ]).finally(() => setIsLoading(false));
+          ]).finally(() => {
+            const totalTime = Date.now();
+            console.log(`[${new Date().toISOString()}] ⏱️ Total time: ${totalTime - startTime}ms`);
+            setIsLoading(false);
+          });
         },
         (error) => {
-          console.error('Location error:', error);
+          console.error(`[${new Date().toISOString()}] ❌ Location error (took ${Date.now() - startTime}ms):`, error);
           setIsLoading(false);
           alert('No se pudo obtener tu ubicación. Verifica los permisos.');
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 5000,  // Reducido de 10s a 5s
+          maximumAge: 30000  // Acepta ubicación de hasta 30s
         }
       );
     }

@@ -45,9 +45,11 @@ export const MapControls: React.FC = () => {
   const centerOnUserLocation = () => {
     if (navigator.geolocation) {
       setIsLocating(true);
+      console.log('🎯 Location button clicked - requesting position...');
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
+          console.log('✅ Location received:', { lat: latitude, lng: longitude });
           updateConfig({ 
             ...config, 
             center: { lat: latitude, lng: longitude }, 
@@ -55,9 +57,15 @@ export const MapControls: React.FC = () => {
           });
           setIsLocating(false);
         },
-        () => {
+        (error) => {
+          console.error('❌ Location error:', error);
           alert('No se pudo obtener tu ubicación. Verifica los permisos del navegador.');
           setIsLocating(false);
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 5000,
+          maximumAge: 30000
         }
       );
     } else {
@@ -67,19 +75,40 @@ export const MapControls: React.FC = () => {
 
   // Buscar rutas cercanas
   const handleNearbyRoutes = () => {
+    const startTime = Date.now();
+    console.log(`[${new Date().toISOString()}] 🚌 Nearby routes button clicked`);
+    
     if (navigator.geolocation) {
+      console.log(`[${new Date().toISOString()}] 📡 Requesting geolocation...`);
+      
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          const geoTime = Date.now();
           const { latitude, longitude } = position.coords;
+          console.log(`[${new Date().toISOString()}] ✅ Location received (took ${geoTime - startTime}ms):`, { lat: latitude, lng: longitude });
+          
+          console.log(`[${new Date().toISOString()}] 🗺️ Updating map center...`);
           updateConfig({ 
             ...config, 
             center: { lat: latitude, lng: longitude }, 
             zoom: 14
           });
+          const mapTime = Date.now();
+          console.log(`[${new Date().toISOString()}] ✅ Map updated (took ${mapTime - geoTime}ms)`);
+          
+          console.log(`[${new Date().toISOString()}] 🔍 Fetching nearby routes (radius: 0.5km)...`);
           openNearbyRoutes(latitude, longitude, 0.5);
+          const totalTime = Date.now();
+          console.log(`[${new Date().toISOString()}] ⏱️ Total time: ${totalTime - startTime}ms`);
         },
-        () => {
+        (error) => {
+          console.error(`[${new Date().toISOString()}] ❌ Location error (took ${Date.now() - startTime}ms):`, error);
           alert('No se pudo obtener tu ubicación. Verifica los permisos del navegador.');
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 5000,
+          maximumAge: 30000
         }
       );
     } else {
