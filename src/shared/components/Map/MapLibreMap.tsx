@@ -34,7 +34,7 @@ export const MapLibreMap: React.FC = () => {
   const [interactiveLayers, setInteractiveLayers] = useState<string[]>(['distritos-fill']);
   const { config, updateConfig } = useMapStore();
   const { pin, setPin } = usePinStore();
-  const { selectedRoute, nearbyRoutes, showNearbyOnMap, selectRoute } = useRutasStore();
+  const { selectedRoute, nearbyRoutes, showNearbyOnMap, selectRoute, setHoveredRoute, setOverlappingRoutes } = useRutasStore();
   const { currentMapStyle, setMapStyle } = useThemeStore();
   const { openNearbyRoutes } = useBottomSheet();
   const { center, zoom } = config;
@@ -118,13 +118,18 @@ export const MapLibreMap: React.FC = () => {
   }, [showNearbyOnMap, nearbyRoutes]);
 
   const handleViewStateChange = useCallback((evt: ViewStateChangeEvent) => {
+    // Limpiar overlapping routes cuando el usuario arrastra el mapa
+    setOverlappingRoutes(null);
+    
     updateConfig({
       center: { lat: evt.viewState.latitude, lng: evt.viewState.longitude },
       zoom: evt.viewState.zoom
     });
-  }, [updateConfig]);
+  }, [updateConfig, setOverlappingRoutes]);
 
   const handleMapClick = useCallback((event: any) => {
+    // Limpiar overlapping routes cuando se hace click en el mapa
+    setOverlappingRoutes(null);
 
     const { features } = event;
     // const { lngLat, features } = event;
@@ -148,7 +153,7 @@ export const MapLibreMap: React.FC = () => {
     
     // setClickPosition(lngLat);
     // Solo agregar pin, sin abrir modal
-  }, [nearbyRoutes, selectRoute]);
+  }, [nearbyRoutes, selectRoute, setOverlappingRoutes]);
 
   const handleMapRightClick = useCallback((event: any) => {
     event.preventDefault();
@@ -221,11 +226,35 @@ export const MapLibreMap: React.FC = () => {
         onLoad={handleMapLoad}
         onMove={handleViewStateChange}
         onClick={(event) => {
-          // Handle distrito clicks first
+          // Check for nearby routes click
           if (event.features && event.features.length > 0) {
+            const routeFeatures = event.features.filter(f => 
+              f.layer?.id?.startsWith('nearby-route-hitbox-') || 
+              f.layer?.id?.startsWith('nearby-route-line-')
+            );
+            
+            if (routeFeatures.length > 0) {
+              const routeCodes = [...new Set(routeFeatures.map(f => 
+                f.layer.id
+                  .replace('nearby-route-hitbox-', '')
+                  .replace('nearby-route-line-', '')
+              ))];
+              
+              if (routeCodes.length === 1) {
+                // Single route, select it
+                setOverlappingRoutes(null);
+                selectRoute(routeCodes[0]);
+                return;
+              } else {
+                // Multiple routes - show overlapping info
+                setOverlappingRoutes(routeCodes);
+                return;
+              }
+            }
+            
+            // Handle distrito clicks
             const feature = event.features[0];
             if (feature.source === 'distritos-source') {
-              // Delegate to GeoDistritos component
               const geoDistritosEvent = new CustomEvent('distrito-click', {
                 detail: { feature, lngLat: event.lngLat }
               });
@@ -241,17 +270,51 @@ export const MapLibreMap: React.FC = () => {
           const isMobile = window.innerWidth < 768;
           
           if (event.features && event.features.length > 0) {
-            const feature = event.features[0];
+            // Check for nearby routes hover (multiple possible)
+            const routeFeatures = event.features.filter(f => 
+              f.layer?.id?.startsWith('nearby-route-hitbox-') || 
+              f.layer?.id?.startsWith('nearby-route-line-')
+            );
             
-            // Check for nearby route hover (hitbox or line)
-            if (feature.layer?.id?.startsWith('nearby-route-hitbox-') || feature.layer?.id?.startsWith('nearby-route-line-')) {
-              const codigo = feature.layer.id
-                .replace('nearby-route-hitbox-', '')
-                .replace('nearby-route-line-', '');
+            if (routeFeatures.length > 0) {
+              const routeCodes = [...new Set(routeFeatures.map(f => 
+                f.layer.id
+                  .replace('nearby-route-hitbox-', '')
+                  .replace('nearby-route-line-', '')
+              ))];
+              
+              event.target.getCanvas().style.cursor = 'pointer';
+              
+              if (routeCodes.length > 1) {
+                // Multiple routes - show summary
+                setHoveredRoute(null);
+                if (!isMobile) {
+                  const rutas = routeCodes.map(code => nearbyRoutes.find(r => r.codigo === code)).filter(Boolean) as typeof nearbyRoutes;
+                  setRouteHover({
+                    codigo: 'multiple',
+                    nombre: `${routeCodes.length} rutas`,
+                    tipo: rutas.map(r => r.nombre).join(', '),
+                    subtipo: '',
+                    sentido: '',
+                    departamento: '',
+                    kilometros: 0,
+                    distancia_m: 0,
+                    x: event.point.x,
+                    y: event.point.y
+                  });
+                }
+                return;
+              }
+              
+              // Single route
+              const codigo = routeCodes[0];
               const ruta = nearbyRoutes.find(r => r.codigo === codigo);
               
               if (ruta) {
                 event.target.getCanvas().style.cursor = 'pointer';
+                
+                // Actualizar hover state
+                setHoveredRoute(ruta.codigo);
                 
                 // Solo mostrar tooltip en desktop
                 if (!isMobile) {
@@ -272,6 +335,7 @@ export const MapLibreMap: React.FC = () => {
               }
             }
             
+            const feature = event.features[0];
             if (feature.source === 'distritos-source') {
               event.target.getCanvas().style.cursor = 'pointer';
 
@@ -304,6 +368,7 @@ export const MapLibreMap: React.FC = () => {
             event.target.getCanvas().style.cursor = '';
             setHoverInfo(null);
             setRouteHover(null);
+            setHoveredRoute(null);
             // Limpiar todos los hovers
             try {
               event.target.queryRenderedFeatures().forEach((f: any) => {
@@ -381,7 +446,7 @@ export const MapLibreMap: React.FC = () => {
 
               <button
                 onClick={() => {
-                  openNearbyRoutes(contextMenu.lngLat.lat, contextMenu.lngLat.lng, 1);
+                  openNearbyRoutes(contextMenu.lngLat.lat, contextMenu.lngLat.lng, 0.5);
                   updateConfig({ ...config, center: { lat: contextMenu.lngLat.lat, lng: contextMenu.lngLat.lng }, zoom: 14 });
                   setContextMenu(null);
                 }}
@@ -433,35 +498,45 @@ export const MapLibreMap: React.FC = () => {
             top: routeHover.y + 10
           }}
         >
-          <div className="font-bold text-base mb-1 text-secondary">Ruta {routeHover.nombre}</div>
-          <div className="text-xs text-white/60 mb-2 font-mono">Código: {routeHover.codigo}</div>
-          <div className="space-y-0.5 text-xs">
-            <div className="flex justify-between gap-3">
-              <span className="text-white/70">Departamento:</span>
-              <span className="font-medium text-right">{routeHover.departamento}</span>
-            </div>
-            <div className="flex justify-between gap-3">
-              <span className="text-white/70">Tipo:</span>
-              <span className="font-medium text-right">{routeHover.tipo}</span>
-            </div>
-            <div className="flex justify-between gap-3">
-              <span className="text-white/70">Subtipo:</span>
-              <span className="font-medium text-right">{routeHover.subtipo}</span>
-            </div>
-            <div className="flex justify-between gap-3">
-              <span className="text-white/70">Sentido:</span>
-              <span className="font-medium text-right">{routeHover.sentido}</span>
-            </div>
-            <div className="flex justify-between gap-3">
-              <span className="text-white/70">Longitud ruta:</span>
-              <span className="font-medium text-right">{routeHover.kilometros?.toFixed(2) || '0.00'} km</span>
-            </div>
-            <div className="flex justify-between gap-3">
-              <span className="text-white/70">Distancia:</span>
-              <span className="font-medium text-right">{routeHover.distancia_m < 1000 ? `${Math.round(routeHover.distancia_m)}m` : `${(routeHover.distancia_m / 1000).toFixed(2)}km`}</span>
-            </div>
-          </div>
-          <div className="text-[10px] text-white/50 mt-2 text-center">Click para ver detalles</div>
+          {routeHover.codigo === 'multiple' ? (
+            <>
+              <div className="font-bold text-base mb-1 text-secondary">{routeHover.nombre}</div>
+              <div className="text-xs text-white/80 mb-2">Rutas: {routeHover.tipo}</div>
+              <div className="text-[10px] text-white/50 mt-2 text-center">Click para seleccionar</div>
+            </>
+          ) : (
+            <>
+              <div className="font-bold text-base mb-1 text-secondary">Ruta {routeHover.nombre}</div>
+              <div className="text-xs text-white/60 mb-2 font-mono">Código: {routeHover.codigo}</div>
+              <div className="space-y-0.5 text-xs">
+                <div className="flex justify-between gap-3">
+                  <span className="text-white/70">Departamento:</span>
+                  <span className="font-medium text-right">{routeHover.departamento}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-white/70">Tipo:</span>
+                  <span className="font-medium text-right">{routeHover.tipo}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-white/70">Subtipo:</span>
+                  <span className="font-medium text-right">{routeHover.subtipo}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-white/70">Sentido:</span>
+                  <span className="font-medium text-right">{routeHover.sentido}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-white/70">Longitud ruta:</span>
+                  <span className="font-medium text-right">{routeHover.kilometros?.toFixed(2) || '0.00'} km</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-white/70">Distancia:</span>
+                  <span className="font-medium text-right">{routeHover.distancia_m < 1000 ? `${Math.round(routeHover.distancia_m)}m` : `${(routeHover.distancia_m / 1000).toFixed(2)}km`}</span>
+                </div>
+              </div>
+              <div className="text-[10px] text-white/50 mt-2 text-center">Click para ver detalles</div>
+            </>
+          )}
         </div>
       )}
     </div>

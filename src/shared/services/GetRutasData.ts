@@ -26,7 +26,7 @@ const checkNetwork = () => {
 export const getNearbyRoutes = async (
     lat: number,
     lng: number,
-    radius: number = 1
+    radius: number = 0.5
 ): Promise<NearbyResponse> => {
     try {
         checkNetwork();

@@ -5,7 +5,7 @@ import { RUTA_COLORS, type SubtipoRuta } from '../../types/rutas';
 import { getRoutesBatch } from '../../services/GetRutasData';
 
 export const NearbyRoutesLayer: React.FC = () => {
-  const { nearbyRoutes, showNearbyOnMap, selectedRoute } = useRutasStore();
+  const { nearbyRoutes, showNearbyOnMap, selectedRoute, hoveredRoute } = useRutasStore();
   const [loadedRoutes, setLoadedRoutes] = React.useState<Map<string, any>>(new Map());
 
   // Cargar geometrías de rutas cercanas en lotes
@@ -48,14 +48,23 @@ export const NearbyRoutesLayer: React.FC = () => {
   // Ocultar rutas cercanas cuando hay una ruta seleccionada
   if (!showNearbyOnMap || !nearbyRoutes || nearbyRoutes.length === 0 || selectedRoute) return null;
 
+  // Ordenar rutas: la que tiene hover al final para que se pinte encima
+  const sortedRoutes = [...nearbyRoutes].sort((a, b) => {
+    if (a.codigo === hoveredRoute) return 1;
+    if (b.codigo === hoveredRoute) return -1;
+    return 0;
+  });
+
   return (
     <>
-      {nearbyRoutes.map((ruta) => {
+      {sortedRoutes.map((ruta) => {
         const fullRoute = loadedRoutes.get(ruta.codigo);
         if (!fullRoute) return null;
 
         const subtipo = ruta.subtipo as SubtipoRuta;
         const color = RUTA_COLORS[subtipo] || '#6b7280';
+        const isHovered = hoveredRoute === ruta.codigo;
+        const isDimmed = hoveredRoute && hoveredRoute !== ruta.codigo;
 
         return (
           <Source
@@ -80,8 +89,8 @@ export const NearbyRoutesLayer: React.FC = () => {
               type="line"
               paint={{
                 'line-color': color,
-                'line-width': 3,
-                'line-opacity': 0.6,
+                'line-width': isHovered ? 5 : 3,
+                'line-opacity': isDimmed ? 0.15 : (isHovered ? 1 : 0.6),
               }}
             />
           </Source>

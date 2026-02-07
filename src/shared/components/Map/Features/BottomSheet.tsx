@@ -34,6 +34,9 @@ export const BottomSheet: React.FC = () => {
   }, [sheetState]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    // Limpiar overlapping routes cuando el usuario interactúa con el drawer
+    useRutasStore.getState().setOverlappingRoutes(null);
+    
     setIsDragging(true);
     setDragStartY(e.touches[0].clientY);
     setDragY(0);
@@ -52,7 +55,11 @@ export const BottomSheet: React.FC = () => {
 
     if (dragY > threshold) {
       if (sheetState === 'full') setSheetState('half');
-      else if (sheetState === 'half') setSheetState('peek');
+      else if (sheetState === 'half') {
+        setSheetState('peek');
+        // Limpiar overlapping routes al cerrar a peek
+        useRutasStore.getState().setOverlappingRoutes(null);
+      }
     } else if (dragY < -threshold) {
       if (sheetState === 'peek') setSheetState('half');
       else if (sheetState === 'half') setSheetState('full');
