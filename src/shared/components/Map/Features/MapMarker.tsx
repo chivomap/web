@@ -13,9 +13,12 @@ export const MapMarker: React.FC<MapMarkerProps> = ({ position }) => {
       latitude={position.lat}
       anchor="bottom"
     >
-      <div className="w-6 h-6 bg-red-500 rounded-full border-2 border-white shadow-lg cursor-pointer">
-        <div className="w-2 h-2 bg-white rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
-      </div>
+      <img 
+        src="/chivomap-pin.svg" 
+        alt="Pin" 
+        className="w-10 h-10 cursor-pointer drop-shadow-lg"
+        style={{ filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3))' }}
+      />
     </Marker>
   );
 };
